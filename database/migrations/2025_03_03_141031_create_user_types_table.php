@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_tipes', function (Blueprint $table) {
+        Schema::create('user_types', function (Blueprint $table) {
             $table->id();
             $table->enum('tipo', ['P', 'C', 'A'])->default('P')->comment('P - pedido; C - cozinha; A - administrador');
             $table->timestamps();
@@ -23,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_tipes');
+        Schema::dropIfExists('user_types');
     }
 };
