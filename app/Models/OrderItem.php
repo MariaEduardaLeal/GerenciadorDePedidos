@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Order extends Model
+class OrderItem extends Model
 {
-    protected $fillable = ['user_id', 'total_price', 'status', 'observation', 'order_name'];
+    protected $fillable = ['user_id', 'total_price', 'status', 'observation'];
 
     public function user()
     {
