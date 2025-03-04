@@ -18,10 +18,10 @@
             <form method="POST" action="{{ route('login') }}" class="login-form">
                 @csrf
 
-                <!-- Campo Email -->
+                <!-- Campo Login (usando name ao invés de email) -->
                 <div class="form-group">
-                    <input type="email" id="email" name="email" value="{{ old('email') }}" placeholder="Login" required autofocus>
-                    @error('email')
+                    <input type="text" id="login" name="name" value="{{ old('name') }}" placeholder="Login" required autofocus>
+                    @error('name')
                         <span class="error">{{ $message }}</span>
                     @enderror
                 </div>
