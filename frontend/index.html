@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Pedido System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gray-200">
+    <div class="flex w-full max-w-5xl bg-white shadow-lg rounded-lg overflow-hidden">
+        <div class="w-1/2 bg-blue-900 flex items-center justify-center p-8">
+            <img src="assets/imgs/logo.webp" alt="Logo do Restaurante" class="w-80 h-auto">
+        </div>
+        <div class="w-1/2 p-10">
+            <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">Login</h1>
+            <form id="login-form">
+                <div class="mb-6">
+                    <label for="username" class="block text-base font-medium text-gray-700">Usuário</label>
+                    <input type="text" id="username" name="username" class="mt-2 block w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-base" required>
+                </div>
+                <div class="mb-6">
+                    <label for="password" class="block text-base font-medium text-gray-700">Senha</label>
+                    <input type="password" id="password" name="password" class="mt-2 block w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-base" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700 transition duration-200 text-lg">Entrar</button>
+            </form>
+            <p id="error-message" class="text-red-500 mt-4 text-center text-base hidden"></p>
+        </div>
+    </div>
+
+    <script src="assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Produtos - Pedido System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-100">
+    <div class="container mx-auto p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800" id="page-title">Gerenciar Produtos</h1>
+            <div>
+                <span id="user-info" class="text-gray-600 mr-4"></span>
+                <button id="logout" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Sair</button>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <h2 class="text-xl font-semibold mb-4" id="form-title">Criar Novo Produto</h2>
+            <form id="product-form">
+                <input type="hidden" id="product-id" name="id">
+                <div class="mb-4">
+                    <label for="product-name" class="block text-sm font-medium text-gray-700">Nome</label>
+                    <input type="text" id="product-name" name="name" class="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="product-description" class="block text-sm font-medium text-gray-700">Descrição</label>
+                    <textarea id="product-description" name="description" class="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label for="product-price" class="block text-sm font-medium text-gray-700">Preço</label>
+                    <input type="number" id="product-price" name="price" step="0.01" class="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Salvar Produto</button>
+                <button type="button" id="cancel-edit" class="hidden bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 ml-2">Cancelar</button>
+            </form>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-4">Lista de Produtos</h2>
+            <div id="products-list" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <script src="../assets/js/product.js">
+    </script>
+</body>
+</html>
