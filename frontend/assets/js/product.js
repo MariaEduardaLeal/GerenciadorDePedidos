@@ -18,6 +18,22 @@ document.getElementById('logout').addEventListener('click', () => {
     window.location.href = '/index.html';
 });
 
+// Configurar a máscara de preço com IMask
+const priceInput = document.getElementById('product-price');
+const priceMask = IMask(priceInput, {
+    mask: 'R$ num',
+    blocks: {
+        num: {
+            mask: Number,
+            thousandsSeparator: '.',
+            radix: ',', 
+            scale: 2,   
+            signed: false, 
+            padFractionalZeros: true 
+        }
+    }
+});
+
 async function loadProducts() {
     try {
         const response = await fetch('/api/products', {
@@ -48,7 +64,7 @@ async function loadProducts() {
                 <div>
                     <p class="font-medium">${product.name}</p>
                     <p class="text-sm text-gray-600">${product.description || 'Sem descrição'}</p>
-                    <p class="text-sm text-gray-600">Preço: R$ ${parseFloat(product.price).toFixed(2)}</p>
+                    <p class="text-sm text-gray-600">Preço: R$ ${parseFloat(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 </div>
                 <div>
                     <button class="edit-product bg-yellow-500 text-white px-2 py-1 rounded mr-2" data-id="${product.id}">Editar</button>
@@ -73,7 +89,7 @@ async function loadProducts() {
                     document.getElementById('product-id').value = product.id;
                     document.getElementById('product-name').value = product.name;
                     document.getElementById('product-description').value = product.description || '';
-                    document.getElementById('product-price').value = product.price;
+                    priceInput.value = `R$ ${parseFloat(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                     document.getElementById('form-title').textContent = 'Editar Produto';
                     document.getElementById('cancel-edit').classList.remove('hidden');
                 } catch (error) {
@@ -120,7 +136,8 @@ document.getElementById('product-form').addEventListener('submit', async (e) => 
     const id = document.getElementById('product-id').value;
     const name = document.getElementById('product-name').value;
     const description = document.getElementById('product-description').value;
-    const price = document.getElementById('product-price').value;
+    // Extrair o valor numérico da máscara (remover "R$" e converter para float)
+    const price = parseFloat(priceMask.unmaskedValue.replace(',', '.'));
 
     const method = id ? 'PUT' : 'POST';
     const url = id ? `/api/products/${id}` : '/api/products';
