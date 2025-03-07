@@ -87,12 +87,14 @@ async function loadProducts() {
         console.log("Products: ", products);
         products.forEach(product => {
             const productDiv = document.createElement('div');
-            productDiv.className = 'border-b pb-2 flex justify-between items-center';
+            productDiv.className = 'border-b pb-2 flex justify-between items-center transition-all duration-500 ease-in-out';
+            productDiv.dataset.id = product.id; // Adicionar ID para identificar o produto
             productDiv.innerHTML = `
                 <div>
                     <p class="font-medium">${product.name}</p>
                     <p class="text-sm text-gray-600">${product.description || 'Sem descrição'}</p>
                     <p class="text-sm text-gray-600">Preço: R$ ${parseFloat(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: true })}</p>
+                    <span class="edited-message hidden text-green-600 font-semibold">Editado</span>
                 </div>
                 <div>
                     <button class="edit-product bg-yellow-500 text-white px-2 py-1 rounded mr-2" data-id="${product.id}">Editar</button>
@@ -102,6 +104,7 @@ async function loadProducts() {
             productsList.appendChild(productDiv);
         });
 
+        // Evento para abrir o modal no modo "editar"
         document.querySelectorAll('.edit-product').forEach(button => {
             button.addEventListener('click', async (e) => {
                 const id = e.target.dataset.id;
@@ -126,28 +129,36 @@ async function loadProducts() {
             });
         });
 
+        // Evento para deletar produto com animação
         document.querySelectorAll('.delete-product').forEach(button => {
             button.addEventListener('click', async (e) => {
                 const id = e.target.dataset.id;
                 if (confirm('Tem certeza que deseja deletar este produto?')) {
                     try {
-                        const response = await fetch(`/api/products/${id}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json',
-                            },
-                        });
+                        const productDiv = e.target.closest('div.border-b');
+                        // Animação de exclusão
+                        productDiv.classList.add('bg-red-500', 'text-white', 'translate-x-full', 'opacity-0');
+                        setTimeout(async () => {
+                            const response = await fetch(`/api/products/${id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                    'Content-Type': 'application/json',
+                                },
+                            });
 
-                        if (response.ok) {
-                            alert('Produto deletado com sucesso');
-                            loadProducts();
-                        } else {
-                            const data = await response.json();
-                            alert(data.error || 'Erro ao deletar produto');
-                        }
+                            if (response.ok) {
+                                alert('Produto deletado com sucesso');
+                                loadProducts();
+                            } else {
+                                const data = await response.json();
+                                alert(data.error || 'Erro ao deletar produto');
+                                productDiv.classList.remove('bg-red-500', 'text-white', 'translate-x-full', 'opacity-0');
+                            }
+                        }, 500); // Tempo da animação
                     } catch (error) {
                         alert('Erro ao conectar ao servidor');
+                        productDiv.classList.remove('bg-red-500', 'text-white', 'translate-x-full', 'opacity-0');
                     }
                 }
             });
@@ -191,6 +202,21 @@ productForm.addEventListener('submit', async (e) => {
             alert(id ? 'Produto atualizado com sucesso' : 'Produto criado com sucesso');
             closeModal();
             loadProducts();
+            // Animação de edição
+            if (id) {
+                setTimeout(() => {
+                    const editedProduct = document.querySelector(`[data-id="${id}"]`);
+                    if (editedProduct) {
+                        const editedMessage = editedProduct.querySelector('.edited-message');
+                        editedProduct.classList.add('bg-green-200');
+                        editedMessage.classList.remove('hidden');
+                        setTimeout(() => {
+                            editedProduct.classList.remove('bg-green-200');
+                            editedMessage.classList.add('hidden');
+                        }, 1000); // Piscar por 1 segundo
+                    }
+                }, 100); // Pequeno delay para garantir que o DOM esteja atualizado
+            }
         } else {
             alert(data.error || 'Erro ao salvar produto');
         }
