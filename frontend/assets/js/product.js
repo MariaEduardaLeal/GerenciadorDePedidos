@@ -25,11 +25,11 @@ const priceMask = IMask(priceInput, {
     blocks: {
         num: {
             mask: Number,
-            thousandsSeparator: '.',
-            radix: ',', 
-            scale: 2,   
-            signed: false, 
-            padFractionalZeros: true 
+            thousandsSeparator: '.', // Separador de milhares como vírgula
+            radix: ',', // Separador decimal como vírgula
+            scale: 2,   // 2 casas decimais
+            signed: false, // Não permitir negativos
+            padFractionalZeros: true // Preencher com zeros à direita (ex.: R$ 12,00)
         }
     }
 });
@@ -64,7 +64,7 @@ async function loadProducts() {
                 <div>
                     <p class="font-medium">${product.name}</p>
                     <p class="text-sm text-gray-600">${product.description || 'Sem descrição'}</p>
-                    <p class="text-sm text-gray-600">Preço: R$ ${parseFloat(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p class="text-sm text-gray-600">Preço: R$ ${parseFloat(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: true })}</p>
                 </div>
                 <div>
                     <button class="edit-product bg-yellow-500 text-white px-2 py-1 rounded mr-2" data-id="${product.id}">Editar</button>
@@ -77,6 +77,7 @@ async function loadProducts() {
         document.querySelectorAll('.edit-product').forEach(button => {
             button.addEventListener('click', async (e) => {
                 const id = e.target.dataset.id;
+                console.log("Id: ", id);
                 try {
                     const response = await fetch(`/api/products/${id}`, {
                         headers: {
@@ -84,15 +85,30 @@ async function loadProducts() {
                             'Content-Type': 'application/json',
                         },
                     });
+
+                    if (!response.ok) {
+                        throw new Error('Erro ao buscar produto');
+                    }
+
                     const product = await response.json();
 
+                    // Preencher os campos do formulário
                     document.getElementById('product-id').value = product.id;
                     document.getElementById('product-name').value = product.name;
                     document.getElementById('product-description').value = product.description || '';
-                    priceInput.value = `R$ ${parseFloat(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    // Formatar o preço para o input com máscara
+                    priceMask.value = `R$ ${parseFloat(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+                    // Alterar o título e mostrar o botão Cancelar
                     document.getElementById('form-title').textContent = 'Editar Produto';
                     document.getElementById('cancel-edit').classList.remove('hidden');
+
+                    // Garantir que os campos estejam editáveis
+                    document.getElementById('product-name').removeAttribute('disabled');
+                    document.getElementById('product-description').removeAttribute('disabled');
+                    document.getElementById('product-price').removeAttribute('disabled');
                 } catch (error) {
+                    console.error('Erro ao carregar dados do produto:', error);
                     alert('Erro ao carregar dados do produto');
                 }
             });
@@ -136,7 +152,6 @@ document.getElementById('product-form').addEventListener('submit', async (e) => 
     const id = document.getElementById('product-id').value;
     const name = document.getElementById('product-name').value;
     const description = document.getElementById('product-description').value;
-    // Extrair o valor numérico da máscara (remover "R$" e converter para float)
     const price = parseFloat(priceMask.unmaskedValue.replace(',', '.'));
 
     const method = id ? 'PUT' : 'POST';

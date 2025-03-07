@@ -144,10 +144,9 @@ app.get('/api/products', authenticateToken, isAdmin, async (req, res) => {
     }
 });
 
-app.put('/api/products/:id', authenticateToken, isAdmin, upload.single('photo'), async (req, res) => {
+app.put('/api/products/:id', authenticateToken, isAdmin, async (req, res) => {
     const { id } = req.params;
     const { name, description, price } = req.body;
-    const photo = req.file ? `/uploads/${req.file.filename}` : req.body.photo;
 
     try {
         const product = await Product.findByPk(id);
@@ -159,13 +158,27 @@ app.put('/api/products/:id', authenticateToken, isAdmin, upload.single('photo'),
             name: name || product.name,
             description: description || product.description,
             price: price ? parseFloat(price) : product.price,
-            photo: photo || product.photo,
         });
 
         res.json({ message: 'Produto atualizado com sucesso', product });
     } catch (error) {
         console.error('Erro ao atualizar produto:', error);
         res.status(500).json({ error: 'Erro ao atualizar produto' });
+    }
+});
+
+app.get('/api/products/:id', authenticateToken, isAdmin, async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const product = await Product.findByPk(id);
+        if (!product) {
+            return res.status(404).json({ error: 'Produto não encontrado' });
+        }
+        res.json(product);
+    } catch (error) {
+        console.error('Erro ao buscar produto:', error);
+        res.status(500).json({ error: 'Erro ao buscar produto' });
     }
 });
 
