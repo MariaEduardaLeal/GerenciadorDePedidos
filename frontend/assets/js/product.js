@@ -18,21 +18,49 @@ document.getElementById('logout').addEventListener('click', () => {
     window.location.href = '/index.html';
 });
 
-// Configurar a máscara de preço com IMask
+// Referências ao modal e ao formulário
+const modal = document.getElementById('product-modal');
+const modalTitle = document.getElementById('modal-title');
+const productForm = document.getElementById('product-form');
 const priceInput = document.getElementById('product-price');
+
+// Configurar a máscara de preço com IMask
 const priceMask = IMask(priceInput, {
     mask: 'R$ num',
     blocks: {
         num: {
             mask: Number,
-            thousandsSeparator: '.', // Separador de milhares como vírgula
+            thousandsSeparator: '.', // Corrigido para vírgula
             radix: ',', // Separador decimal como vírgula
             scale: 2,   // 2 casas decimais
-            signed: false, // Não permitir negativos
-            padFractionalZeros: true // Preencher com zeros à direita (ex.: R$ 12,00)
+            signed: false,
+            padFractionalZeros: true
         }
     }
 });
+
+// Função para abrir o modal
+function openModal(mode = 'create', product = null) {
+    modal.classList.remove('hidden');
+    if (mode === 'create') {
+        modalTitle.textContent = 'Criar Novo Produto';
+        productForm.reset();
+        document.getElementById('product-id').value = '';
+        priceMask.value = '';
+    } else if (mode === 'edit' && product) {
+        modalTitle.textContent = 'Editar Produto';
+        document.getElementById('product-id').value = product.id;
+        document.getElementById('product-name').value = product.name;
+        document.getElementById('product-description').value = product.description || '';
+        priceMask.value = `R$ ${parseFloat(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+}
+
+// Função para fechar o modal
+function closeModal() {
+    modal.classList.add('hidden');
+    productForm.reset();
+}
 
 async function loadProducts() {
     try {
@@ -74,10 +102,10 @@ async function loadProducts() {
             productsList.appendChild(productDiv);
         });
 
+        // Evento para abrir o modal no modo "editar"
         document.querySelectorAll('.edit-product').forEach(button => {
             button.addEventListener('click', async (e) => {
                 const id = e.target.dataset.id;
-                console.log("Id: ", id);
                 try {
                     const response = await fetch(`/api/products/${id}`, {
                         headers: {
@@ -91,22 +119,7 @@ async function loadProducts() {
                     }
 
                     const product = await response.json();
-
-                    // Preencher os campos do formulário
-                    document.getElementById('product-id').value = product.id;
-                    document.getElementById('product-name').value = product.name;
-                    document.getElementById('product-description').value = product.description || '';
-                    // Formatar o preço para o input com máscara
-                    priceMask.value = `R$ ${parseFloat(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-                    // Alterar o título e mostrar o botão Cancelar
-                    document.getElementById('form-title').textContent = 'Editar Produto';
-                    document.getElementById('cancel-edit').classList.remove('hidden');
-
-                    // Garantir que os campos estejam editáveis
-                    document.getElementById('product-name').removeAttribute('disabled');
-                    document.getElementById('product-description').removeAttribute('disabled');
-                    document.getElementById('product-price').removeAttribute('disabled');
+                    openModal('edit', product);
                 } catch (error) {
                     console.error('Erro ao carregar dados do produto:', error);
                     alert('Erro ao carregar dados do produto');
@@ -114,6 +127,7 @@ async function loadProducts() {
             });
         });
 
+        // Evento para deletar produto
         document.querySelectorAll('.delete-product').forEach(button => {
             button.addEventListener('click', async (e) => {
                 const id = e.target.dataset.id;
@@ -146,7 +160,16 @@ async function loadProducts() {
     }
 }
 
-document.getElementById('product-form').addEventListener('submit', async (e) => {
+// Evento para abrir o modal no modo "cadastrar"
+document.getElementById('open-create-modal').addEventListener('click', () => {
+    openModal('create');
+});
+
+// Evento para fechar o modal
+document.getElementById('close-modal').addEventListener('click', closeModal);
+
+// Evento de submissão do formulário no modal
+productForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const id = document.getElementById('product-id').value;
@@ -171,10 +194,7 @@ document.getElementById('product-form').addEventListener('submit', async (e) => 
 
         if (response.ok) {
             alert(id ? 'Produto atualizado com sucesso' : 'Produto criado com sucesso');
-            document.getElementById('product-form').reset();
-            document.getElementById('product-id').value = '';
-            document.getElementById('form-title').textContent = 'Criar Novo Produto';
-            document.getElementById('cancel-edit').classList.add('hidden');
+            closeModal();
             loadProducts();
         } else {
             alert(data.error || 'Erro ao salvar produto');
@@ -182,13 +202,6 @@ document.getElementById('product-form').addEventListener('submit', async (e) => 
     } catch (error) {
         alert('Erro ao conectar ao servidor');
     }
-});
-
-document.getElementById('cancel-edit').addEventListener('click', () => {
-    document.getElementById('product-form').reset();
-    document.getElementById('product-id').value = '';
-    document.getElementById('form-title').textContent = 'Criar Novo Produto';
-    document.getElementById('cancel-edit').classList.add('hidden');
 });
 
 loadProducts();

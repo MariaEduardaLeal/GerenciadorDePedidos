@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerenciar Produtos - Pedido System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Adicionando o IMask.js via CDN -->
     <script src="https://unpkg.com/imask"></script>
 </head>
 <body class="min-h-screen bg-gray-100">
@@ -18,28 +17,37 @@
             </div>
         </div>
         <div class="bg-white p-6 rounded-lg shadow-md mb-6">
-            <h2 class="text-xl font-semibold mb-4" id="form-title">Criar Novo Produto</h2>
-            <form id="product-form">
-                <input type="hidden" id="product-id" name="id">
-                <div class="mb-4">
-                    <label for="product-name" class="block text-sm font-medium text-gray-700">Nome</label>
-                    <input type="text" id="product-name" name="name" class="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-                <div class="mb-4">
-                    <label for="product-description" class="block text-sm font-medium text-gray-700">Descrição</label>
-                    <textarea id="product-description" name="description" class="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                </div>
-                <div class="mb-4">
-                    <label for="product-price" class="block text-sm font-medium text-gray-700">Preço</label>
-                    <input type="text" id="product-price" name="price" class="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="R$ 0,00" required>
-                </div>
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Salvar Produto</button>
-                <button type="button" id="cancel-edit" class="hidden bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 ml-2">Cancelar</button>
-            </form>
-        </div>
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-xl font-semibold mb-4">Lista de Produtos</h2>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Lista de Produtos</h2>
+                <button id="open-create-modal" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Cadastrar Produto</button>
+            </div>
             <div id="products-list" class="space-y-4"></div>
+        </div>
+
+        <!-- Modal -->
+        <div id="product-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+            <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+                <h2 id="modal-title" class="text-xl font-semibold mb-4">Criar Novo Produto</h2>
+                <form id="product-form">
+                    <input type="hidden" id="product-id" name="id">
+                    <div class="mb-4">
+                        <label for="product-name" class="block text-sm font-medium text-gray-700">Nome</label>
+                        <input type="text" id="product-name" name="name" class="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="product-description" class="block text-sm font-medium text-gray-700">Descrição</label>
+                        <textarea id="product-description" name="description" class="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label for="product-price" class="block text-sm font-medium text-gray-700">Preço</label>
+                        <input type="text" id="product-price" name="price" class="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="R$ 0,00" required>
+                    </div>
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" id="close-modal" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancelar</button>
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Salvar</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
