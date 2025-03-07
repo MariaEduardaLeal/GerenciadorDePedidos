@@ -22,21 +22,25 @@ Antes de instalar o projeto, certifique-se de ter os seguintes itens instalados:
 
 ```
 pedido-system/
-├── backend/                # Código do backend (Node.js/Express)
-│   ├── models/            # Modelos Sequelize
-│   ├── seeders/           # Scripts de seed para o banco
-│   └── server.js          # Arquivo principal do servidor
-├── config/                # Configurações
-│   └── database.js        # Configuração do Sequelize
-├── database/              # Scripts SQL
-│   └── database.sql       # Script para criar o banco e tabelas
-├── frontend/              # Arquivos estáticos do frontend
-│   ├── index.html         # Tela de login (página inicial)
-│   └── products/          # Subpasta para gerenciamento de produtos
-│       └── index.html     # Tela de produtos
-├── .env                   # Variáveis de ambiente (não versionado)
-├── package.json           # Dependências e scripts
-└── README.md              # Este arquivo
+├── backend/
+│   ├── models/
+│   │   ├── Product.js         # Modelo Sequelize para Produto
+│   │   └── User.js           # Modelo Sequelize para Usuário
+│   ├── server.js             # Arquivo principal do servidor Node.js/Express
+│   └── config/
+│       └── database.js       # Configuração do Sequelize (conexão com o BD)
+├── frontend/
+│   ├── assets/
+│   │   └── js/
+│   │       ├── product.js    # JavaScript para a página de produtos (com animações)
+│   │       └── sidebar.js    # JavaScript para o componente sidebar
+│   ├── components/
+│   │   └── sidebar.html      # HTML do componente sidebar (menu lateral)
+│   ├── products/
+│   │   └── index.html        # Página principal de gerenciamento de produtos
+├── .env                      # Arquivo de variáveis de ambiente (ex.: APP_KEY, DB configs)
+├── package.json              # Configurações do projeto Node.js e dependências
+└── node_modules/             # Dependências instaladas via npm (não versionada)
 ```
 
 ## Instalação
