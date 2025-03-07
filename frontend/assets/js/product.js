@@ -30,9 +30,9 @@ const priceMask = IMask(priceInput, {
     blocks: {
         num: {
             mask: Number,
-            thousandsSeparator: '.', // Corrigido para vírgula
-            radix: ',', // Separador decimal como vírgula
-            scale: 2,   // 2 casas decimais
+            thousandsSeparator: '.',
+            radix: ',',
+            scale: 2,
             signed: false,
             padFractionalZeros: true
         }
@@ -102,7 +102,6 @@ async function loadProducts() {
             productsList.appendChild(productDiv);
         });
 
-        // Evento para abrir o modal no modo "editar"
         document.querySelectorAll('.edit-product').forEach(button => {
             button.addEventListener('click', async (e) => {
                 const id = e.target.dataset.id;
@@ -127,7 +126,6 @@ async function loadProducts() {
             });
         });
 
-        // Evento para deletar produto
         document.querySelectorAll('.delete-product').forEach(button => {
             button.addEventListener('click', async (e) => {
                 const id = e.target.dataset.id;
@@ -160,15 +158,12 @@ async function loadProducts() {
     }
 }
 
-// Evento para abrir o modal no modo "cadastrar"
 document.getElementById('open-create-modal').addEventListener('click', () => {
     openModal('create');
 });
 
-// Evento para fechar o modal
 document.getElementById('close-modal').addEventListener('click', closeModal);
 
-// Evento de submissão do formulário no modal
 productForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
