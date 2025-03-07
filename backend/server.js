@@ -1,21 +1,26 @@
 const express = require('express');
-const cors = require("cors");
-const http = require("http");
-const { Server } = require("socket.io");
+const cors = require('cors');
+const http = require('http');
+const { Server } = require('socket.io');
 const sequelize = require('../config/database');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
+const OrderController = require('./controllers/OrderController');
+const ProductController = require('./controllers/ProductController');
+const defineAssociations = require('./associations');
 require('dotenv').config();
 
 // Importar modelos
 const User = require('./models/User');
 const Product = require('./models/Product');
+const Order = require('./models/Order');
+const OrderItem = require('./models/OrderItem');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server, { cors: { origin: '*' } });
 
 // Configurar o multer para salvar arquivos
 const storage = multer.diskStorage({
@@ -25,7 +30,7 @@ const storage = multer.diskStorage({
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
+    },
 });
 
 const upload = multer({
@@ -40,16 +45,18 @@ const upload = multer({
         } else {
             cb(new Error('Apenas imagens (jpeg, jpg, png, gif) são permitidas!'));
         }
-    }
+    },
 });
 
 app.use(cors());
 app.use(express.json());
 
-// Servir arquivos estáticos da pasta frontend
+// Servir arquivos estáticos
 app.use(express.static(path.join(__dirname, '../frontend')));
-// Servir arquivos de uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Definir associações entre modelos
+defineAssociations();
 
 // Middleware para verificar o token JWT
 const authenticateToken = (req, res, next) => {
@@ -79,7 +86,7 @@ const isAdmin = (req, res, next) => {
 
 // Rota de teste
 app.get('/api', (req, res) => {
-    res.send("API Rodando");
+    res.send('API Rodando');
 });
 
 // Rota de Login
@@ -115,112 +122,31 @@ app.post('/api/login', async (req, res) => {
 });
 
 // Rotas de Produtos
-app.post('/api/products', authenticateToken, isAdmin, async (req, res) => {
-    const { name, description, price } = req.body;
+app.post('/api/products', authenticateToken, isAdmin, ProductController.createProduct);
+app.get('/api/products', authenticateToken, isAdmin, ProductController.getAllProducts);
+app.put('/api/products/:id', authenticateToken, isAdmin, ProductController.updateProduct);
+app.get('/api/products/:id', authenticateToken, isAdmin, ProductController.getProductById);
+app.delete('/api/products/:id', authenticateToken, isAdmin, ProductController.deleteProduct);
 
-    if (!name || !price) {
-        return res.status(400).json({ error: 'Nome e preço são obrigatórios' });
-    }
+// Rotas de Pedidos
+app.get('/api/orders', authenticateToken, OrderController.getAllOrders);
+app.post('/api/orders', authenticateToken, OrderController.createOrder);
 
-    try {
-        const product = await Product.create({
-            name,
-            description,
-            price: parseFloat(price),
-        });
-        res.status(201).json({ message: 'Produto criado com sucesso', product });
-    } catch (error) {
-        console.error('Erro ao criar produto:', error);
-        res.status(500).json({ error: 'Erro ao criar produto' });
-    }
-});
-app.get('/api/products', authenticateToken, isAdmin, async (req, res) => {
-    try {
-        const products = await Product.findAll();
-        res.json(products);
-    } catch (error) {
-        console.error('Erro ao listar produtos:', error);
-        res.status(500).json({ error: 'Erro ao listar produtos' });
-    }
-});
-
-app.put('/api/products/:id', authenticateToken, isAdmin, async (req, res) => {
-    const { id } = req.params;
-    const { name, description, price } = req.body;
-
-    try {
-        const product = await Product.findByPk(id);
-        if (!product) {
-            return res.status(404).json({ error: 'Produto não encontrado' });
-        }
-
-        await product.update({
-            name: name || product.name,
-            description: description || product.description,
-            price: price ? parseFloat(price) : product.price,
-        });
-
-        res.json({ message: 'Produto atualizado com sucesso', product });
-    } catch (error) {
-        console.error('Erro ao atualizar produto:', error);
-        res.status(500).json({ error: 'Erro ao atualizar produto' });
-    }
-});
-
-app.get('/api/products/:id', authenticateToken, isAdmin, async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        const product = await Product.findByPk(id);
-        if (!product) {
-            return res.status(404).json({ error: 'Produto não encontrado' });
-        }
-        res.json(product);
-    } catch (error) {
-        console.error('Erro ao buscar produto:', error);
-        res.status(500).json({ error: 'Erro ao buscar produto' });
-    }
-});
-
-app.delete('/api/products/:id', authenticateToken, isAdmin, async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        const product = await Product.findByPk(id);
-        if (!product) {
-            return res.status(404).json({ error: 'Produto não encontrado' });
-        }
-
-        if (product.photo) {
-            const fs = require('fs');
-            const filePath = path.join(__dirname, '../', product.photo);
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-            }
-        }
-
-        await product.destroy();
-        res.json({ message: 'Produto deletado com sucesso' });
-    } catch (error) {
-        console.error('Erro ao deletar produto:', error);
-        res.status(500).json({ error: 'Erro ao deletar produto' });
-    }
-});
-
-io.on("connection", (socket) => {
-    console.log("Novo cliente conectado");
-    socket.on("disconnect", () => {
-        console.log("Cliente desconectado");
+// Socket.IO
+io.on('connection', (socket) => {
+    console.log('Novo cliente conectado');
+    socket.on('disconnect', () => {
+        console.log('Cliente desconectado');
     });
 });
 
+// Sincronizar o banco e iniciar o servidor
 sequelize.sync({ force: false }).then(() => {
     console.log('🟢 Banco de dados sincronizado');
+    const PORT = process.env.PORT || 3000;
+    server.listen(PORT, () => {
+        console.log(`🟢 Servidor rodando na porta ${PORT}`);
+    });
 }).catch(err => {
     console.error('🔴 Erro ao sincronizar o banco:', err);
-});
-
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
 });

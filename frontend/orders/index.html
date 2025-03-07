@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Pedidos - Pedido System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-100 flex">
+    <div id="sidebar-container" class="flex-shrink-0"></div>
+    <div id="main-content" class="flex-1 transition-all duration-300 ease-in-out">
+        <div class="container mx-auto p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl font-bold text-gray-800">Gerenciar Pedidos</h1>
+                <div>
+                    <span id="user-info" class="text-gray-600 mr-4"></span>
+                    <button id="logout" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Sair</button>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Lista de Pedidos</h2>
+                    <button id="open-create-modal" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Cadastrar Pedido</button>
+                </div>
+                <div id="orders-list" class="space-y-4"></div>
+            </div>
+
+            <!-- Modal -->
+            <div id="order-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+                <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
+                    <h2 id="modal-title" class="text-xl font-semibold mb-4">Criar Novo Pedido</h2>
+                    <form id="order-form">
+                        <div class="mb-4">
+                            <label for="order-name" class="block text-sm font-medium text-gray-700">Nome do Pedido</label>
+                            <input type="text" id="order-name" name="order_name" class="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="observation" class="block text-sm font-medium text-gray-700">Observação</label>
+                            <textarea id="observation" name="observation" class="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700">Itens do Pedido</label>
+                            <div id="order-items" class="space-y-2">
+                                <div class="flex items-center space-x-2">
+                                    <select name="product_id" class="product-select mt-1 block w-1/2 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="">Selecione um produto</option>
+                                    </select>
+                                    <input type="number" name="quantity" min="1" class="quantity mt-1 block w-1/4 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Quantidade" required>
+                                    <button type="button" class="remove-item bg-red-500 text-white px-2 py-1 rounded">X</button>
+                                </div>
+                            </div>
+                            <button type="button" id="add-item" class="mt-2 bg-green-500 text-white px-2 py-1 rounded">Adicionar Item</button>
+                        </div>
+                        <div class="flex justify-end space-x-2">
+                            <button type="button" id="close-modal" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancelar</button>
+                            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/sidebar.js"></script>
+    <script src="../assets/js/order.js"></script>
+    <script>
+        fetch('/components/sidebar.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('sidebar-container').innerHTML = html;
+                initSidebar();
+            });
+    </script>
+</body>
+</html>

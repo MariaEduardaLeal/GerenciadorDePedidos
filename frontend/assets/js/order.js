@@ -1,0 +1,195 @@
+// Autenticação e inicialização
+const token = localStorage.getItem('token');
+const user = JSON.parse(localStorage.getItem('user'));
+
+if (!token || !user) {
+    window.location.href = '/index.html';
+}
+
+// Elementos do DOM
+const userInfo = document.getElementById('user-info');
+const logoutBtn = document.getElementById('logout');
+const modal = document.getElementById('order-modal');
+const modalTitle = document.getElementById('modal-title');
+const orderForm = document.getElementById('order-form');
+const orderItemsContainer = document.getElementById('order-items');
+const openCreateModalBtn = document.getElementById('open-create-modal');
+const closeModalBtn = document.getElementById('close-modal');
+const addItemBtn = document.getElementById('add-item');
+const ordersList = document.getElementById('orders-list');
+
+// Exibir informações do usuário
+userInfo.textContent = `Bem-vindo, ${user.name}!`;
+
+// Logout
+logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/index.html';
+});
+
+// Carregar produtos para os selects
+async function loadProductsForSelect() {
+    try {
+        const response = await fetch('/api/products', {
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (!response.ok) throw new Error('Erro ao carregar produtos');
+        const products = await response.json();
+
+        const selects = document.querySelectorAll('.product-select');
+        selects.forEach(select => {
+            select.innerHTML = '<option value="">Selecione um produto</option>';
+            products.forEach(product => {
+                const option = document.createElement('option');
+                option.value = product.id;
+                option.textContent = `${product.name} (R$ ${product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`;
+                select.appendChild(option);
+            });
+        });
+    } catch (error) {
+        console.error('Erro ao carregar produtos para select:', error);
+    }
+}
+
+// Carregar pedidos
+async function loadOrders() {
+    try {
+        const response = await fetch('/api/orders', {
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Erro ao carregar pedidos');
+        }
+
+        const orders = await response.json();
+        ordersList.innerHTML = '';
+
+        if (orders.length === 0) {
+            ordersList.innerHTML = '<p class="text-gray-500">Nenhum pedido cadastrado.</p>';
+            return;
+        }
+
+        orders.forEach(order => {
+            const orderDiv = document.createElement('div');
+            orderDiv.className = 'border-b pb-2 flex justify-between items-center transition-all duration-500 ease-in-out';
+            orderDiv.innerHTML = `
+                <div>
+                    <p class="font-medium">${order.order_name}</p>
+                    <p class="text-sm text-gray-600">Cliente: ${user.name} (ID: ${order.user_id})</p>
+                    <p class="text-sm text-gray-600">Total: R$ ${order.total_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                    <p class="text-sm text-gray-600">Status: ${order.status}</p>
+                    <p class="text-sm text-gray-600">Observação: ${order.observation || 'Nenhuma'}</p>
+                    <p class="text-sm text-gray-600">Itens: ${order.OrderItems.map(item => `${item.quantity}x ${item.Product.name}`).join(', ')}</p>
+                    <p class="text-sm text-gray-600">Criado em: ${new Date(order.created_at).toLocaleString('pt-BR')}</p>
+                </div>
+                <div>
+                    <!-- Botões de editar/excluir podem ser adicionados aqui -->
+                </div>
+            `;
+            ordersList.appendChild(orderDiv);
+        });
+    } catch (error) {
+        console.error('Erro ao carregar pedidos:', error);
+        ordersList.innerHTML = '<p class="text-red-500">Erro ao carregar pedidos</p>';
+    }
+}
+
+// Abrir modal
+function openModal() {
+    modal.classList.remove('hidden');
+    modalTitle.textContent = 'Criar Novo Pedido';
+    orderForm.reset();
+    orderItemsContainer.innerHTML = `
+        <div class="flex items-center space-x-2">
+            <select name="product_id" class="product-select mt-1 block w-1/2 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Selecione um produto</option>
+            </select>
+            <input type="number" name="quantity" min="1" class="quantity mt-1 block w-1/4 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Quantidade" required>
+            <button type="button" class="remove-item bg-red-500 text-white px-2 py-1 rounded">X</button>
+        </div>
+    `;
+    loadProductsForSelect();
+}
+
+// Fechar modal
+function closeModal() {
+    modal.classList.add('hidden');
+    orderForm.reset();
+}
+
+// Adicionar novo item ao pedido
+addItemBtn.addEventListener('click', () => {
+    const newItem = document.createElement('div');
+    newItem.className = 'flex items-center space-x-2';
+    newItem.innerHTML = `
+        <select name="product_id" class="product-select mt-1 block w-1/2 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">Selecione um produto</option>
+        </select>
+        <input type="number" name="quantity" min="1" class="quantity mt-1 block w-1/4 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Quantidade" required>
+        <button type="button" class="remove-item bg-red-500 text-white px-2 py-1 rounded">X</button>
+    `;
+    orderItemsContainer.appendChild(newItem);
+    loadProductsForSelect();
+});
+
+// Remover item do pedido
+orderItemsContainer.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-item')) {
+        const items = orderItemsContainer.querySelectorAll('.flex');
+        if (items.length > 1) {
+            e.target.closest('.flex').remove();
+        }
+    }
+});
+
+// Enviar formulário
+orderForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const order_name = document.getElementById('order-name').value;
+    const observation = document.getElementById('observation').value;
+    const items = Array.from(orderItemsContainer.querySelectorAll('.flex'))
+        .map(item => ({
+            product_id: parseInt(item.querySelector('.product-select').value),
+            quantity: parseInt(item.querySelector('.quantity').value),
+        }))
+        .filter(item => item.product_id && item.quantity);
+
+    if (items.length === 0) {
+        alert('Adicione pelo menos um item ao pedido');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/orders', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ order_name, observation, items }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert('Pedido criado com sucesso');
+            closeModal();
+            loadOrders();
+        } else {
+            alert(data.error || 'Erro ao salvar pedido');
+        }
+    } catch (error) {
+        console.error('Erro ao enviar pedido:', error);
+        alert('Erro ao conectar ao servidor');
+    }
+});
+
+// Eventos principais
+openCreateModalBtn.addEventListener('click', openModal);
+closeModalBtn.addEventListener('click', closeModal);
+
+// Carregar pedidos ao iniciar
+loadOrders();
