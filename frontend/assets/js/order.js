@@ -18,6 +18,13 @@ const closeModalBtn = document.getElementById('close-modal');
 const addItemBtn = document.getElementById('add-item');
 const ordersList = document.getElementById('orders-list');
 
+// Verificar se todos os elementos foram encontrados
+if (!userInfo || !logoutBtn || !modal || !modalTitle || !orderForm || !orderItemsContainer || !openCreateModalBtn || !closeModalBtn || !addItemBtn || !ordersList) {
+    console.error('Erro: Um ou mais elementos do DOM não foram encontrados');
+    ordersList.innerHTML = '<p class="text-red-500">Erro ao carregar a página</p>';
+    throw new Error('Elementos do DOM ausentes');
+}
+
 // Exibir informações do usuário
 userInfo.textContent = `Bem-vindo, ${user.name}!`;
 
@@ -29,16 +36,17 @@ logoutBtn.addEventListener('click', () => {
 });
 
 // Carregar produtos para os selects
-async function loadProductsForSelect() {
+async function loadProductsForSelect(container = orderItemsContainer) {
     try {
-        const response = await fetch('/api/products', {
+        const response = await fetch('/api/orders', {
             headers: { 'Authorization': `Bearer ${token}` },
         });
         if (!response.ok) throw new Error('Erro ao carregar produtos');
         const products = await response.json();
 
-        const selects = document.querySelectorAll('.product-select');
+        const selects = container.querySelectorAll('.product-select');
         selects.forEach(select => {
+            const currentValue = select.value; // Preserva o valor selecionado
             select.innerHTML = '<option value="">Selecione um produto</option>';
             products.forEach(product => {
                 const option = document.createElement('option');
@@ -46,6 +54,7 @@ async function loadProductsForSelect() {
                 option.textContent = `${product.name} (R$ ${product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`;
                 select.appendChild(option);
             });
+            select.value = currentValue; // Restaura o valor selecionado
         });
     } catch (error) {
         console.error('Erro ao carregar produtos para select:', error);
@@ -77,15 +86,17 @@ async function loadOrders() {
             orderDiv.innerHTML = `
                 <div>
                     <p class="font-medium">${order.order_name}</p>
-                    <p class="text-sm text-gray-600">Cliente: ${user.name} (ID: ${order.user_id})</p>
+                    <p class="text-sm text-gray-600">Cliente: ${order.customer_name || 'Não especificado'}</p>
+                    <p class="text-sm text-gray-600">Criado por: ${user.name} (ID: ${order.user_id})</p>
                     <p class="text-sm text-gray-600">Total: R$ ${order.total_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                     <p class="text-sm text-gray-600">Status: ${order.status}</p>
                     <p class="text-sm text-gray-600">Observação: ${order.observation || 'Nenhuma'}</p>
                     <p class="text-sm text-gray-600">Itens: ${order.OrderItems.map(item => `${item.quantity}x ${item.Product.name}`).join(', ')}</p>
                     <p class="text-sm text-gray-600">Criado em: ${new Date(order.created_at).toLocaleString('pt-BR')}</p>
                 </div>
-                <div>
-                    <!-- Botões de editar/excluir podem ser adicionados aqui -->
+                <div class="space-x-2">
+                    <button class="edit-order bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600" data-id="${order.id}">Editar</button>
+                    <button class="delete-order bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" data-id="${order.id}">Excluir</button>
                 </div>
             `;
             ordersList.appendChild(orderDiv);
@@ -96,26 +107,51 @@ async function loadOrders() {
     }
 }
 
-// Abrir modal
-function openModal() {
+// Abrir modal para criar ou editar pedido
+function openModal(order = null) {
     modal.classList.remove('hidden');
-    modalTitle.textContent = 'Criar Novo Pedido';
+    modalTitle.textContent = order ? 'Editar Pedido' : 'Criar Novo Pedido';
     orderForm.reset();
-    orderItemsContainer.innerHTML = `
-        <div class="flex items-center space-x-2">
+    orderItemsContainer.innerHTML = '';
+
+    if (order) {
+        document.getElementById('order-name').value = order.order_name;
+        document.getElementById('customer-name').value = order.customer_name;
+        document.getElementById('observation').value = order.observation || '';
+
+        order.OrderItems.forEach(item => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'flex items-center space-x-2';
+            itemDiv.innerHTML = `
+                <select name="product_id" class="product-select mt-1 block w-1/2 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Selecione um produto</option>
+                </select>
+                <input type="number" name="quantity" min="1" class="quantity mt-1 block w-1/4 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" value="${item.quantity}" required>
+                <button type="button" class="remove-item bg-red-500 text-white px-2 py-1 rounded">X</button>
+            `;
+            orderItemsContainer.appendChild(itemDiv);
+            loadProductsForSelect(orderItemsContainer);
+            itemDiv.querySelector('.product-select').value = item.product_id;
+        });
+    } else {
+        const initialItem = document.createElement('div');
+        initialItem.className = 'flex items-center space-x-2';
+        initialItem.innerHTML = `
             <select name="product_id" class="product-select mt-1 block w-1/2 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">Selecione um produto</option>
             </select>
             <input type="number" name="quantity" min="1" class="quantity mt-1 block w-1/4 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Quantidade" required>
             <button type="button" class="remove-item bg-red-500 text-white px-2 py-1 rounded">X</button>
-        </div>
-    `;
-    loadProductsForSelect();
+        `;
+        orderItemsContainer.appendChild(initialItem);
+        loadProductsForSelect();
+    }
 }
 
 // Fechar modal
 function closeModal() {
     modal.classList.add('hidden');
+    orderItemsContainer.innerHTML = '';
     orderForm.reset();
 }
 
@@ -131,7 +167,7 @@ addItemBtn.addEventListener('click', () => {
         <button type="button" class="remove-item bg-red-500 text-white px-2 py-1 rounded">X</button>
     `;
     orderItemsContainer.appendChild(newItem);
-    loadProductsForSelect();
+    loadProductsForSelect(orderItemsContainer);
 });
 
 // Remover item do pedido
@@ -144,40 +180,50 @@ orderItemsContainer.addEventListener('click', (e) => {
     }
 });
 
-// Enviar formulário
+// Enviar formulário (criar ou editar)
 orderForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const order_name = document.getElementById('order-name').value;
+    const customer_name = document.getElementById('customer-name').value;
     const observation = document.getElementById('observation').value;
     const items = Array.from(orderItemsContainer.querySelectorAll('.flex'))
         .map(item => ({
-            product_id: parseInt(item.querySelector('.product-select').value),
-            quantity: parseInt(item.querySelector('.quantity').value),
+            product_id: parseInt(item.querySelector('.product-select').value) || 0,
+            quantity: parseInt(item.querySelector('.quantity').value) || 0,
         }))
-        .filter(item => item.product_id && item.quantity);
+        .filter(item => item.product_id > 0 && item.quantity > 0);
 
+    if (!customer_name) {
+        alert('Por favor, informe o nome do cliente');
+        return;
+    }
     if (items.length === 0) {
-        alert('Adicione pelo menos um item ao pedido');
+        alert('Adicione pelo menos um item válido ao pedido');
         return;
     }
 
+    const orderId = orderForm.dataset.orderId; // Para edição
+    const method = orderId ? 'PUT' : 'POST';
+    const url = orderId ? `/api/orders/${orderId}` : '/api/orders';
+
     try {
-        const response = await fetch('/api/orders', {
-            method: 'POST',
+        const response = await fetch(url, {
+            method,
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ order_name, observation, items }),
+            body: JSON.stringify({ order_name, customer_name, observation, items }),
         });
 
         const data = await response.json();
 
         if (response.ok) {
-            alert('Pedido criado com sucesso');
+            alert(orderId ? 'Pedido atualizado com sucesso' : 'Pedido criado com sucesso');
             closeModal();
             loadOrders();
+            delete orderForm.dataset.orderId; // Limpa o ID após edição
         } else {
             alert(data.error || 'Erro ao salvar pedido');
         }
@@ -187,8 +233,43 @@ orderForm.addEventListener('submit', async (e) => {
     }
 });
 
+// Editar ou excluir pedido
+ordersList.addEventListener('click', async (e) => {
+    const orderId = e.target.dataset.id;
+    if (!orderId) return;
+
+    if (e.target.classList.contains('edit-order')) {
+        const response = await fetch(`/api/orders/${orderId}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+        const order = await response.json();
+        openModal(order);
+        orderForm.dataset.orderId = orderId; // Armazena o ID para edição
+    } else if (e.target.classList.contains('delete-order')) {
+        if (confirm('Tem certeza que deseja excluir este pedido?')) {
+            try {
+                const response = await fetch(`/api/orders/${orderId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
+
+                if (response.ok) {
+                    alert('Pedido excluído com sucesso');
+                    loadOrders();
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Erro ao excluir pedido');
+                }
+            } catch (error) {
+                console.error('Erro ao excluir pedido:', error);
+                alert('Erro ao conectar ao servidor');
+            }
+        }
+    }
+});
+
 // Eventos principais
-openCreateModalBtn.addEventListener('click', openModal);
+openCreateModalBtn.addEventListener('click', () => openModal());
 closeModalBtn.addEventListener('click', closeModal);
 
 // Carregar pedidos ao iniciar
