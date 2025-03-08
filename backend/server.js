@@ -76,6 +76,10 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
+});
+
 // Middleware para verificar se o usuário é administrador
 const isAdmin = (req, res, next) => {
     if (req.user.role !== 3) {
@@ -152,8 +156,8 @@ sequelize.sync({ force: false })
         console.log('🟢 Banco de dados sincronizado');
 
         const PORT = process.env.PORT || 3000;
-        server.listen(PORT, () => {
-            console.log(`🟢 Servidor rodando na porta ${PORT}`);
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log(`Servidor rodando na porta ${PORT}`);
         });
     })
     .catch(err => {
