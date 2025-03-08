@@ -131,6 +131,7 @@ app.delete('/api/products/:id', authenticateToken, isAdmin, ProductController.de
 // Rotas de Pedidos
 app.get('/api/orders', authenticateToken, OrderController.getAllOrders);
 app.post('/api/orders', authenticateToken, OrderController.createOrder);
+app.get('/api/orders/:id', authenticateToken, OrderController.getOrderById);
 app.put('/api/orders/:id', authenticateToken, OrderController.updateOrder);
 app.delete('/api/orders/:id', authenticateToken, OrderController.deleteOrder);
 

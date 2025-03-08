@@ -38,7 +38,7 @@ logoutBtn.addEventListener('click', () => {
 // Carregar produtos para os selects
 async function loadProductsForSelect(container = orderItemsContainer) {
     try {
-        const response = await fetch('/api/products', { // Corrigido de '/api/orders' para '/api/products'
+        const response = await fetch('/api/products', {
             headers: { 'Authorization': `Bearer ${token}` },
         });
         if (!response.ok) {
@@ -111,17 +111,19 @@ async function loadOrders() {
 }
 
 // Abrir modal para criar ou editar pedido
-function openModal(order = null) {
+async function openModal(order = null) {
     modal.classList.remove('hidden');
     modalTitle.textContent = order ? 'Editar Pedido' : 'Criar Novo Pedido';
     orderForm.reset();
     orderItemsContainer.innerHTML = '';
 
     if (order) {
+        // Preencher os campos com os dados do pedido
         document.getElementById('order-name').value = order.order_name;
         document.getElementById('customer-name').value = order.customer_name;
         document.getElementById('observation').value = order.observation || '';
 
+        // Preencher os itens do pedido
         order.OrderItems.forEach(item => {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'flex items-center space-x-2';
@@ -133,9 +135,13 @@ function openModal(order = null) {
                 <button type="button" class="remove-item bg-red-500 text-white px-2 py-1 rounded">X</button>
             `;
             orderItemsContainer.appendChild(itemDiv);
-            loadProductsForSelect(orderItemsContainer);
-            itemDiv.querySelector('.product-select').value = item.product_id;
         });
+        await loadProductsForSelect(orderItemsContainer); // Carrega os produtos após adicionar todos os itens
+        // Definir os valores dos selects após carregar os produtos
+        orderItemsContainer.querySelectorAll('.flex').forEach((itemDiv, index) => {
+            itemDiv.querySelector('.product-select').value = order.OrderItems[index].product_id;
+        });
+        orderForm.dataset.orderId = order.id; // Armazena o ID para edição
     } else {
         const initialItem = document.createElement('div');
         initialItem.className = 'flex items-center space-x-2';
@@ -147,7 +153,7 @@ function openModal(order = null) {
             <button type="button" class="remove-item bg-red-500 text-white px-2 py-1 rounded">X</button>
         `;
         orderItemsContainer.appendChild(initialItem);
-        loadProductsForSelect();
+        await loadProductsForSelect();
     }
 }
 
@@ -156,10 +162,11 @@ function closeModal() {
     modal.classList.add('hidden');
     orderItemsContainer.innerHTML = '';
     orderForm.reset();
+    delete orderForm.dataset.orderId; // Limpa o ID ao fechar
 }
 
 // Adicionar novo item ao pedido
-addItemBtn.addEventListener('click', () => {
+addItemBtn.addEventListener('click', async () => {
     const newItem = document.createElement('div');
     newItem.className = 'flex items-center space-x-2';
     newItem.innerHTML = `
@@ -170,7 +177,7 @@ addItemBtn.addEventListener('click', () => {
         <button type="button" class="remove-item bg-red-500 text-white px-2 py-1 rounded">X</button>
     `;
     orderItemsContainer.appendChild(newItem);
-    loadProductsForSelect(orderItemsContainer);
+    await loadProductsForSelect(orderItemsContainer);
 });
 
 // Remover item do pedido
@@ -226,7 +233,6 @@ orderForm.addEventListener('submit', async (e) => {
             alert(orderId ? 'Pedido atualizado com sucesso' : 'Pedido criado com sucesso');
             closeModal();
             loadOrders();
-            delete orderForm.dataset.orderId; // Limpa o ID após edição
         } else {
             alert(data.error || 'Erro ao salvar pedido');
         }
@@ -242,12 +248,21 @@ ordersList.addEventListener('click', async (e) => {
     if (!orderId) return;
 
     if (e.target.classList.contains('edit-order')) {
-        const response = await fetch(`/api/orders/${orderId}`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-        });
-        const order = await response.json();
-        openModal(order);
-        orderForm.dataset.orderId = orderId; // Armazena o ID para edição
+        try {
+            const response = await fetch(`/api/orders/${orderId}`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Erro ao carregar pedido');
+            }
+            const order = await response.json();
+            console.log("Order: ", order);
+            await openModal(order);
+        } catch (error) {
+            console.error('Erro ao carregar pedido para edição:', error);
+            alert('Erro ao carregar o pedido para edição');
+        }
     } else if (e.target.classList.contains('delete-order')) {
         if (confirm('Tem certeza que deseja excluir este pedido?')) {
             try {

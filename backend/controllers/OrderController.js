@@ -15,6 +15,22 @@ class OrderController {
         }
     }
 
+    static async getOrderById(req, res) {
+        const { id } = req.params;
+        try {
+            const order = await Order.findByPk(id, {
+                include: [{ model: OrderItem, include: [Product] }],
+            });
+            if (!order) {
+                return res.status(404).json({ error: 'Pedido não encontrado' });
+            }
+            res.json(order);
+        } catch (error) {
+            console.error('Erro ao buscar pedido:', error);
+            res.status(500).json({ error: 'Erro ao buscar pedido' });
+        }
+    }
+
     static async createOrder(req, res) {
         const { order_name, customer_name, observation, items } = req.body;
 
@@ -91,6 +107,7 @@ class OrderController {
                     subtotal,
                 });
             }
+
             await order.update({
                 order_name,
                 customer_name,
@@ -98,8 +115,8 @@ class OrderController {
                 total_price,
             });
 
-            await OrderItem.destroy({ where: { order_id: order.id } }); // Remove itens antigos
-            await OrderItem.bulkCreate(orderItems); // Adiciona novos itens
+            await OrderItem.destroy({ where: { order_id: order.id } });
+            await OrderItem.bulkCreate(orderItems);
 
             res.json({ message: 'Pedido atualizado com sucesso', order });
         } catch (error) {
@@ -117,7 +134,7 @@ class OrderController {
                 return res.status(404).json({ error: 'Pedido não encontrado' });
             }
 
-            await OrderItem.destroy({ where: { order_id: order.id } }); // Remove itens associados
+            await OrderItem.destroy({ where: { order_id: order.id } });
             await order.destroy();
 
             res.json({ message: 'Pedido excluído com sucesso' });
