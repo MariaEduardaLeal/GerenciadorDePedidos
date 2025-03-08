@@ -38,10 +38,13 @@ logoutBtn.addEventListener('click', () => {
 // Carregar produtos para os selects
 async function loadProductsForSelect(container = orderItemsContainer) {
     try {
-        const response = await fetch('/api/orders', {
+        const response = await fetch('/api/products', { // Corrigido de '/api/orders' para '/api/products'
             headers: { 'Authorization': `Bearer ${token}` },
         });
-        if (!response.ok) throw new Error('Erro ao carregar produtos');
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Erro ao carregar produtos');
+        }
         const products = await response.json();
 
         const selects = container.querySelectorAll('.product-select');

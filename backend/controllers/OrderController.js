@@ -91,7 +91,6 @@ class OrderController {
                     subtotal,
                 });
             }
-
             await order.update({
                 order_name,
                 customer_name,
