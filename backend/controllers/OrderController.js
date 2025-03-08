@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const OrderItem = require('../models/OrderItem');
 const Product = require('../models/Product');
+const OrderLog = require('../models/OrderLog');
 
 class OrderController {
     static async getAllOrders(req, res) {
@@ -141,6 +142,42 @@ class OrderController {
         } catch (error) {
             console.error('Erro ao excluir pedido:', error);
             res.status(500).json({ error: 'Erro ao excluir pedido' });
+        }
+    }
+
+    static async completeOrder(req, res) {
+        const { id } = req.params;
+        const userId = req.user.id; // Assume que o middleware de autenticação adiciona req.user
+    
+        try {
+            const order = await Order.findByPk(id, { include: OrderItem });
+            if (!order) {
+                return res.status(404).json({ error: 'Pedido não encontrado' });
+            }
+    
+            // Verificar se o pedido já está completo ou cancelado
+            if (order.status === 'complete' || order.status === 'canceled') {
+                return res.status(400).json({ error: 'Este pedido já foi finalizado ou cancelado' });
+            }
+    
+            // Atualizar o status do pedido
+            await order.update({ status: 'complete' });
+    
+            // Registrar a ação no order_logs
+            await OrderLog.create({
+                order_id: order.id,
+                user_id: userId,
+                total_price: order.total_price,
+                status: 'complete',
+                action: 'Pedido finalizado',
+                observation: order.observation || null,
+                order_name: order.order_name,
+            });
+    
+            res.status(200).json({ message: 'Pedido finalizado com sucesso', order });
+        } catch (error) {
+            console.error('Erro ao finalizar pedido:', error);
+            res.status(500).json({ error: 'Erro ao finalizar pedido' });
         }
     }
 }

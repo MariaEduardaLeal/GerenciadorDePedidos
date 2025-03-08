@@ -66,7 +66,6 @@ async function loadKitchenOrders() {
             kitchenOrders.appendChild(orderDiv);
         });
 
-        // Adicionar eventos de drag-and-drop
         setupDragAndDrop();
     } catch (error) {
         console.error('Erro ao carregar pedidos:', error);
@@ -110,28 +109,32 @@ function setupDragAndDrop() {
     });
 }
 
-// Finalizar pedido
+// Finalizar pedido usando a nova rota
 async function completeOrder(orderId) {
     try {
-        const response = await fetch(`/api/orders/${orderId}`, {
+        console.log(`Tentando finalizar pedido com ID: ${orderId}`);
+        const response = await fetch(`/api/orders/${orderId}/complete`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ status: 'complete' }),
+            body: JSON.stringify({}), // Não precisa enviar nada no body
         });
 
-        if (response.ok) {
-            alert('Pedido finalizado com sucesso');
-            loadKitchenOrders();
-        } else {
-            const data = await response.json();
-            alert(data.error || 'Erro ao finalizar pedido');
+        console.log('Status da resposta:', response.status);
+        const data = await response.json();
+        console.log('Resposta do servidor:', data);
+
+        if (!response.ok) {
+            throw new Error(data.error || `Erro ao finalizar pedido (Status: ${response.status})`);
         }
+
+        alert('Pedido finalizado com sucesso');
+        loadKitchenOrders();
     } catch (error) {
-        console.error('Erro ao finalizar pedido:', error);
-        alert('Erro ao conectar ao servidor');
+        console.error('Erro ao finalizar pedido:', error.message);
+        alert(`Erro ao finalizar pedido: ${error.message}`);
     }
 }
 
@@ -139,6 +142,7 @@ async function completeOrder(orderId) {
 kitchenOrders.addEventListener('click', (e) => {
     if (e.target.classList.contains('complete-order')) {
         const orderId = e.target.dataset.id;
+        console.log('Botão Finalizar clicado para orderId:', orderId);
         if (confirm('Deseja marcar este pedido como finalizado?')) {
             completeOrder(orderId);
         }
