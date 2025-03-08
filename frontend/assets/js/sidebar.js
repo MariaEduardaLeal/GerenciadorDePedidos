@@ -31,7 +31,7 @@ function initSidebar() {
     const links = sidebar.querySelectorAll('a');
     links.forEach(link => {
         if (link.getAttribute('href') === currentPath) {
-            link.classList.add('bg-gray-700');
+            link.classList.add('bg-blue-800');
         }
     });
 }

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cozinha - Pedidos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans flex">
+    <!-- Sidebar será injetada aqui -->
+    <div id="sidebar-container"></div>
+
+    <!-- Conteúdo Principal -->
+    <main id="main-content" class="flex-1 transition-all duration-300 ease-in-out ml-16">
+        <div class="container mx-auto p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl font-bold text-gray-800">Cozinha - Pedidos em Progresso</h1>
+                <div>
+                    <span id="user-info" class="text-gray-600 mr-4"></span>
+                    <button id="logout" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Sair</button>
+                </div>
+            </div>
+            <div id="kitchen-orders" class="space-y-4 max-h-[70vh] overflow-y-auto"></div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="../assets/js/sidebar.js"></script>
+    <script src="../assets/js/kitchen.js"></script>
+    <script>
+        // Carregar a sidebar dinamicamente
+        fetch('../components/sidebar.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('sidebar-container').innerHTML = data;
+                initSidebar(); // Note que o orders usa initSidebar(), ajustei aqui para consistência
+            })
+            .catch(error => console.error('Erro ao carregar sidebar:', error));
+    </script>
+</body>
+</html>
