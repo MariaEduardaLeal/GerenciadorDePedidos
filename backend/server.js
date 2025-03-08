@@ -131,6 +131,9 @@ app.delete('/api/products/:id', authenticateToken, isAdmin, ProductController.de
 // Rotas de Pedidos
 app.get('/api/orders', authenticateToken, OrderController.getAllOrders);
 app.post('/api/orders', authenticateToken, OrderController.createOrder);
+app.get('/api/orders/:id', authenticateToken, OrderController.getOrderById);
+app.put('/api/orders/:id', authenticateToken, OrderController.updateOrder);
+app.delete('/api/orders/:id', authenticateToken, OrderController.deleteOrder);
 
 // Socket.IO
 io.on('connection', (socket) => {
@@ -138,15 +141,20 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log('Cliente desconectado');
     });
+
+    // Aqui você pode adicionar outros eventos do Socket.IO
 });
 
-// Sincronizar o banco e iniciar o servidor
-sequelize.sync({ force: false }).then(() => {
-    console.log('🟢 Banco de dados sincronizado');
-    const PORT = process.env.PORT || 3000;
-    server.listen(PORT, () => {
-        console.log(`🟢 Servidor rodando na porta ${PORT}`);
+// Sincronizar o banco de dados e iniciar o servidor
+sequelize.sync({ force: false })
+    .then(() => {
+        console.log('🟢 Banco de dados sincronizado');
+
+        const PORT = process.env.PORT || 3000;
+        server.listen(PORT, () => {
+            console.log(`🟢 Servidor rodando na porta ${PORT}`);
+        });
+    })
+    .catch(err => {
+        console.error('🔴 Erro ao sincronizar o banco:', err);
     });
-}).catch(err => {
-    console.error('🔴 Erro ao sincronizar o banco:', err);
-});

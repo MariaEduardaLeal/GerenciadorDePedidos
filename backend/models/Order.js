@@ -27,6 +27,10 @@ const Order = sequelize.define('Order', {
         type: DataTypes.STRING(255),
         allowNull: false,
     },
+    customer_name: { 
+        type: DataTypes.STRING(255),
+        allowNull: false,
+    },
 }, {
     tableName: 'orders',
     timestamps: true,
