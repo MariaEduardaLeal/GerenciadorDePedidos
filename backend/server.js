@@ -7,20 +7,27 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
-const OrderController = require('./controllers/OrderController');
-const ProductController = require('./controllers/ProductController');
 const defineAssociations = require('./associations');
 require('dotenv').config();
 
 // Importar modelos
 const User = require('./models/User');
-const Product = require('./models/Product');
-const Order = require('./models/Order');
-const OrderItem = require('./models/OrderItem');
 
+// Configurar o app e servidor
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Servir arquivos estáticos (frontend e uploads)
+app.use(express.static(path.join(__dirname, '../frontend')));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Definir associações entre modelos
+defineAssociations();
 
 // Configurar o multer para salvar arquivos
 const storage = multer.diskStorage({
@@ -48,16 +55,6 @@ const upload = multer({
     },
 });
 
-app.use(cors());
-app.use(express.json());
-
-// Servir arquivos estáticos
-app.use(express.static(path.join(__dirname, '../frontend')));
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
-// Definir associações entre modelos
-defineAssociations();
-
 // Middleware para verificar o token JWT
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -76,10 +73,6 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
-});
-
 // Middleware para verificar se o usuário é administrador
 const isAdmin = (req, res, next) => {
     if (req.user.role !== 3) {
@@ -88,12 +81,12 @@ const isAdmin = (req, res, next) => {
     next();
 };
 
-// Rota de teste
+// Rotas
 app.get('/api', (req, res) => {
     res.send('API Rodando');
 });
 
-// Rota de Login
+// Rota de login
 app.post('/api/login', async (req, res) => {
     const { name, password } = req.body;
 
@@ -125,20 +118,16 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// Rotas de Produtos
-app.post('/api/products', authenticateToken, isAdmin, ProductController.createProduct);
-app.get('/api/products', authenticateToken, isAdmin, ProductController.getAllProducts);
-app.put('/api/products/:id', authenticateToken, isAdmin, ProductController.updateProduct);
-app.get('/api/products/:id', authenticateToken, isAdmin, ProductController.getProductById);
-app.delete('/api/products/:id', authenticateToken, isAdmin, ProductController.deleteProduct);
+// Importar e usar rotas separadas
+const orderRoutes = require('./routes/orderRoutes');
+const productRoutes = require('./routes/productRoutes');
+app.use('/api/orders', orderRoutes(authenticateToken));
+app.use('/api/products', productRoutes(authenticateToken, isAdmin));
 
-// Rotas de Pedidos
-app.get('/api/orders', authenticateToken, OrderController.getAllOrders);
-app.post('/api/orders', authenticateToken, OrderController.createOrder);
-app.get('/api/orders/:id', authenticateToken, OrderController.getOrderById);
-app.put('/api/orders/:id', authenticateToken, OrderController.updateOrder);
-app.put('/api/orders/:id/complete', authenticateToken, OrderController.completeOrder);
-app.delete('/api/orders/:id', authenticateToken, OrderController.deleteOrder);
+// Rota padrão para o frontend
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
+});
 
 // Socket.IO
 io.on('connection', (socket) => {
@@ -146,17 +135,15 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log('Cliente desconectado');
     });
-
-    // Aqui você pode adicionar outros eventos do Socket.IO
+    // Adicione outros eventos do Socket.IO aqui
 });
 
-// Sincronizar o banco de dados e iniciar o servidor
+// Sincronizar o banco e iniciar o servidor
 sequelize.sync({ force: false })
     .then(() => {
         console.log('🟢 Banco de dados sincronizado');
-
         const PORT = process.env.PORT || 3000;
-        app.listen(PORT, '0.0.0.0', () => {
+        server.listen(PORT, '0.0.0.0', () => {
             console.log(`Servidor rodando na porta ${PORT}`);
         });
     })
