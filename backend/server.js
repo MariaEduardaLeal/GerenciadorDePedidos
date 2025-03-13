@@ -121,6 +121,9 @@ app.post('/api/login', async (req, res) => {
 // Importar e usar rotas separadas
 const orderRoutes = require('./routes/orderRoutes');
 const productRoutes = require('./routes/productRoutes');
+const userRoutes = require('./routes/userRoutes');
+app.use('/api/users', userRoutes(authenticateToken, isAdmin));
+
 app.use('/api/orders', orderRoutes(authenticateToken));
 app.use('/api/products', productRoutes(authenticateToken, isAdmin));
 
