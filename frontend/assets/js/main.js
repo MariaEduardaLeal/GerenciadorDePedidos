@@ -1,7 +1,4 @@
-const form = document.getElementById('login-form');
-const errorMessage = document.getElementById('error-message');
-
-form.addEventListener('submit', async (e) => {
+document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const name = document.getElementById('username').value;
@@ -10,24 +7,46 @@ form.addEventListener('submit', async (e) => {
     try {
         const response = await fetch('/api/login', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, password }),
         });
 
         const data = await response.json();
 
-        if (response.ok) {
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-            window.location.href = '/products/index.html';
-        } else {
-            errorMessage.textContent = data.error || 'Erro ao fazer login';
-            errorMessage.classList.remove('hidden');
+        if (!response.ok) {
+            alert(data.error || 'Erro ao fazer login');
+            return;
+        }
+
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        // Redirecionar com base no role
+        switch (data.user.role) {
+            case 1: // Cliente
+                window.location.href = '/orders/index.html';
+                break;
+            case 2: // Cozinha
+                window.location.href = '/kitchen/index.html';
+                break;
+            case 3: // Admin
+                window.location.href = '/products/index.html';
+                break;
+            default:
+                window.location.href = '/index.html'; // Fallback
         }
     } catch (error) {
-        errorMessage.textContent = 'Erro ao conectar ao servidor';
-        errorMessage.classList.remove('hidden');
+        alert('Erro ao conectar ao servidor');
     }
 });
+
+// Se já estiver logado, redirecionar
+if (localStorage.getItem('token') && localStorage.getItem('user')) {
+    const user = JSON.parse(localStorage.getItem('user'));
+    switch (user.role) {
+        case 1: window.location.href = '/orders/index.html'; break;
+        case 2: window.location.href = '/kitchen/index.html'; break;
+        case 3: window.location.href = '/products/index.html'; break;
+        default: break;
+    }
+}

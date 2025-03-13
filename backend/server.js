@@ -31,9 +31,7 @@ defineAssociations();
 
 // Configurar o multer para salvar arquivos
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/');
-    },
+    destination: (req, file, cb) => cb(null, 'uploads/'),
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         cb(null, uniqueSuffix + path.extname(file.originalname));
@@ -46,12 +44,8 @@ const upload = multer({
         const filetypes = /jpeg|jpg|png|gif/;
         const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
         const mimetype = filetypes.test(file.mimetype);
-
-        if (extname && mimetype) {
-            return cb(null, true);
-        } else {
-            cb(new Error('Apenas imagens (jpeg, jpg, png, gif) são permitidas!'));
-        }
+        if (extname && mimetype) cb(null, true);
+        else cb(new Error('Apenas imagens (jpeg, jpg, png, gif) são permitidas!'));
     },
 });
 
@@ -60,14 +54,10 @@ const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
-    if (!token) {
-        return res.status(401).json({ error: 'Token não fornecido' });
-    }
+    if (!token) return res.status(401).json({ error: 'Token não fornecido' });
 
     jwt.verify(token, process.env.APP_KEY, (err, user) => {
-        if (err) {
-            return res.status(403).json({ error: 'Token inválido ou expirado' });
-        }
+        if (err) return res.status(403).json({ error: 'Token inválido ou expirado' });
         req.user = user;
         next();
     });
@@ -82,9 +72,7 @@ const isAdmin = (req, res, next) => {
 };
 
 // Rotas
-app.get('/api', (req, res) => {
-    res.send('API Rodando');
-});
+app.get('/api', (req, res) => res.send('API Rodando'));
 
 // Rota de login
 app.post('/api/login', async (req, res) => {
@@ -96,14 +84,10 @@ app.post('/api/login', async (req, res) => {
 
     try {
         const user = await User.findOne({ where: { name } });
-        if (!user) {
-            return res.status(401).json({ error: 'Usuário não encontrado' });
-        }
+        if (!user) return res.status(401).json({ error: 'Usuário não encontrado' });
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-            return res.status(401).json({ error: 'Senha incorreta' });
-        }
+        if (!isPasswordValid) return res.status(401).json({ error: 'Senha incorreta' });
 
         const token = jwt.sign(
             { id: user.id, name: user.name, role: user.user_type_id },
@@ -122,10 +106,10 @@ app.post('/api/login', async (req, res) => {
 const orderRoutes = require('./routes/orderRoutes');
 const productRoutes = require('./routes/productRoutes');
 const userRoutes = require('./routes/userRoutes');
-app.use('/api/users', userRoutes(authenticateToken, isAdmin));
 
 app.use('/api/orders', orderRoutes(authenticateToken));
-app.use('/api/products', productRoutes(authenticateToken, isAdmin));
+app.use('/api/products', productRoutes(authenticateToken)); // Correto: sem isAdmin aqui
+app.use('/api/users', userRoutes(authenticateToken, isAdmin));
 
 // Rota padrão para o frontend
 app.get('*', (req, res) => {
@@ -135,9 +119,7 @@ app.get('*', (req, res) => {
 // Socket.IO
 io.on('connection', (socket) => {
     console.log('Novo cliente conectado');
-    socket.on('disconnect', () => {
-        console.log('Cliente desconectado');
-    });
+    socket.on('disconnect', () => console.log('Cliente desconectado'));
     // Adicione outros eventos do Socket.IO aqui
 });
 

@@ -5,11 +5,6 @@ if (!token || !user) {
     window.location.href = '/index.html';
 }
 
-if (user.role !== 3) {
-    alert('Acesso negado. Apenas administradores podem gerenciar produtos.');
-    window.location.href = '/index.html';
-}
-
 document.getElementById('user-info').textContent = `Bem-vindo, ${user.name}!`;
 
 document.getElementById('logout').addEventListener('click', () => {
@@ -70,7 +65,7 @@ async function loadProducts() {
                 'Content-Type': 'application/json',
             },
         });
-
+        console.log("re: ", response);
         if (!response.ok) {
             const data = await response.json();
             throw new Error(data.error || 'Erro ao carregar produtos');

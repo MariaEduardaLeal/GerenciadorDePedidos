@@ -4,11 +4,11 @@ const ProductController = require('../controllers/ProductController');
 module.exports = (authenticateToken, isAdmin) => {
     const router = express.Router();
 
-    router.post('/', authenticateToken, isAdmin, ProductController.createProduct);
-    router.get('/', authenticateToken, isAdmin, ProductController.getAllProducts);
-    router.put('/:id', authenticateToken, isAdmin, ProductController.updateProduct);
-    router.get('/:id', authenticateToken, isAdmin, ProductController.getProductById);
-    router.delete('/:id', authenticateToken, isAdmin, ProductController.deleteProduct);
+    router.get('/', authenticateToken, ProductController.getAllProducts);
+    router.get('/:id', authenticateToken, ProductController.getProductById);
+    router.post('/', authenticateToken, ProductController.createProduct);
+    router.put('/:id', authenticateToken, ProductController.updateProduct);
+    router.delete('/:id', authenticateToken, ProductController.deleteProduct);
 
     return router;
 };
