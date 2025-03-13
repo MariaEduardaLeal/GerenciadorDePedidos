@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Usuários - Pedido System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-100 flex flex-col md:flex-row">
+    <!-- Sidebar -->
+    <div id="sidebar-container" class="w-full md:w-64 flex-shrink-0 md:fixed md:h-screen md:overflow-y-auto text-white">
+        <!-- Sidebar será injetado aqui -->
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div id="main-content" class="flex-1 transition-all duration-300 ease-in-out md:ml-64 p-4 md:p-6">
+        <div class="container mx-auto">
+            <!-- Cabeçalho -->
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Gerenciar Usuários</h1>
+                <div class="flex items-center space-x-4">
+                    <span id="user-info" class="text-gray-600">Usuário</span>
+                    <button id="logout" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 w-full md:w-auto">Sair</button>
+                </div>
+            </div>
+
+            <!-- Lista de Usuários -->
+            <div class="bg-white p-4 md:p-6 rounded-lg shadow-md mb-6">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-4 space-y-4 md:space-y-0">
+                    <h2 class="text-xl font-semibold">Lista de Usuários</h2>
+                    <button id="open-create-modal" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full md:w-auto">Cadastrar Usuário</button>
+                </div>
+                <div id="users-list" class="space-y-4">
+                    <!-- Usuários serão carregados aqui dinamicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Usuário -->
+    <div id="user-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-4 md:p-6 rounded-lg shadow-lg w-full max-w-md mx-4">
+            <h2 id="modal-title" class="text-xl font-semibold mb-4">Cadastrar Novo Usuário</h2>
+            <form id="user-form" class="space-y-4">
+                <input type="hidden" id="user-id" name="id">
+                <div>
+                    <label for="user-name" class="block text-sm font-medium text-gray-700">Nome</label>
+                    <input type="text" id="user-name" name="name" class="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                    <label for="user-password" class="block text-sm font-medium text-gray-700">Senha</label>
+                    <input type="password" id="user-password" name="password" class="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Deixe em branco para manter a senha atual">
+                </div>
+                <div>
+                    <label for="user-type" class="block text-sm font-medium text-gray-700">Tipo de Usuário</label>
+                    <select id="user-type" name="user_type_id" class="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        <option value="" disabled>Selecione</option>
+                        <option value="1">Cliente</option>
+                        <option value="2">Cozinha</option>
+                        <option value="3">Administrador</option>
+                    </select>
+                </div>
+                <div class="flex flex-col md:flex-row justify-end space-y-2 md:space-y-0 md:space-x-2">
+                    <button type="button" id="close-modal" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 w-full md:w-auto">Cancelar</button>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full md:w-auto">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../assets/js/sidebar.js"></script>
+    <script src="../assets/js/users.js"></script>
+    <script>
+        // Carregar o sidebar dinamicamente
+        fetch('/components/sidebar.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('sidebar-container').innerHTML = html;
+                initSidebar();
+            });
+    </script>
+</body>
+</html>
