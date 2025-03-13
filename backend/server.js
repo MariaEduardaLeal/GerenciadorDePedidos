@@ -96,14 +96,10 @@ app.post('/api/login', async (req, res) => {
 
     try {
         const user = await User.findOne({ where: { name } });
-        if (!user) {
-            return res.status(401).json({ error: 'Usuário não encontrado' });
-        }
+        if (!user) return res.status(401).json({ error: 'Usuário não encontrado' });
 
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-            return res.status(401).json({ error: 'Senha incorreta' });
-        }
+        const isPasswordValid = await require('bcryptjs').compare(password, user.password);
+        if (!isPasswordValid) return res.status(401).json({ error: 'Senha incorreta' });
 
         const token = jwt.sign(
             { id: user.id, name: user.name, role: user.user_type_id },
