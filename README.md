@@ -193,4 +193,4 @@ Este projeto está sob a licença MIT.
 
 ## Contato
 
-Se tiver dúvidas ou sugestões, abra uma issue no repositório ou entre em contato com `seu-email@example.com`.
+Se tiver dúvidas ou sugestões, abra uma issue no repositório ou entre em contato com `eduardaleal753@gmail.com`.
