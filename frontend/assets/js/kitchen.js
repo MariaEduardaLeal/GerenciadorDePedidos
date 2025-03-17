@@ -61,12 +61,22 @@ async function loadKitchenOrders() {
                     <p class="text-sm text-gray-600"><span class="font-bold">Observação:</span> ${order.observation || 'Nenhuma'}</p>
                     <p class="text-sm text-gray-600">Criado em: ${new Date(order.created_at).toLocaleString('pt-BR')}</p>
                 </div>
-                <button class="complete-order bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600" data-id="${order.id}">Finalizar</button>
+                <div class="flex space-x-4 items-center">
+                    <label class="flex items-center text-yellow-500">
+                        <input type="checkbox" class="in-progress-checkbox mr-2 h-5 w-5 text-yellow-500 border-gray-300 rounded focus:ring-yellow-500" data-id="${order.id}" checked>
+                        <span>Em Progresso</span>
+                    </label>
+                    <label class="flex items-center text-green-500">
+                        <input type="checkbox" class="complete-checkbox mr-2 h-5 w-5 text-green-500 border-gray-300 rounded focus:ring-green-500" data-id="${order.id}">
+                        <span>Finalizar</span>
+                    </label>
+                </div>
             `;
             kitchenOrders.appendChild(orderDiv);
         });
 
         setupDragAndDrop();
+        setupCheckboxes();
     } catch (error) {
         console.error('Erro ao carregar pedidos:', error);
         kitchenOrders.innerHTML = '<p class="text-red-500">Erro ao carregar pedidos</p>';
@@ -109,45 +119,64 @@ function setupDragAndDrop() {
     });
 }
 
-// Finalizar pedido usando a nova rota
+// Configurar comportamento dos checkboxes
+function setupCheckboxes() {
+    const inProgressCheckboxes = document.querySelectorAll('.in-progress-checkbox');
+    const completeCheckboxes = document.querySelectorAll('.complete-checkbox');
+
+    inProgressCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            const orderId = e.target.dataset.id;
+            const completeCheckbox = kitchenOrders.querySelector(`.complete-checkbox[data-id="${orderId}"]`);
+            if (!e.target.checked && !completeCheckbox.checked) {
+                e.target.checked = true; // Não permite desmarcar ambos
+                alert('O pedido deve estar "Em Progresso" ou "Finalizado".');
+            }
+        });
+    });
+
+    completeCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', async (e) => {
+            const orderId = e.target.dataset.id;
+            const inProgressCheckbox = kitchenOrders.querySelector(`.in-progress-checkbox[data-id="${orderId}"]`);
+            if (e.target.checked) {
+                inProgressCheckbox.checked = false;
+                if (confirm('Deseja marcar este pedido como finalizado?')) {
+                    await completeOrder(orderId);
+                } else {
+                    e.target.checked = false;
+                    inProgressCheckbox.checked = true;
+                }
+            }
+        });
+    });
+}
+
+// Finalizar pedido
 async function completeOrder(orderId) {
     try {
-        console.log(`Tentando finalizar pedido com ID: ${orderId}`);
         const response = await fetch(`/api/orders/${orderId}/complete`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({}), // Não precisa enviar nada no body
+            body: JSON.stringify({ status: 'completed' }),
         });
 
-        console.log('Status da resposta:', response.status);
-        const data = await response.json();
-        console.log('Resposta do servidor:', data);
-
         if (!response.ok) {
-            throw new Error(data.error || `Erro ao finalizar pedido (Status: ${response.status})`);
+            const data = await response.json();
+            throw new Error(data.error || 'Erro ao finalizar pedido');
         }
 
         alert('Pedido finalizado com sucesso');
         loadKitchenOrders();
     } catch (error) {
-        console.error('Erro ao finalizar pedido:', error.message);
-        alert(`Erro ao finalizar pedido: ${error.message}`);
+        console.error('Erro ao finalizar pedido:', error);
+        alert('Erro ao finalizar pedido');
+        loadKitchenOrders(); // Recarrega pra corrigir o estado
     }
 }
-
-// Evento para finalizar pedido
-kitchenOrders.addEventListener('click', (e) => {
-    if (e.target.classList.contains('complete-order')) {
-        const orderId = e.target.dataset.id;
-        console.log('Botão Finalizar clicado para orderId:', orderId);
-        if (confirm('Deseja marcar este pedido como finalizado?')) {
-            completeOrder(orderId);
-        }
-    }
-});
 
 // Atualizar pedidos a cada 30 segundos
 setInterval(loadKitchenOrders, 30000);
