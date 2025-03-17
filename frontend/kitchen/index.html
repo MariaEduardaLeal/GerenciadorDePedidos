@@ -33,7 +33,7 @@
             .then(response => response.text())
             .then(data => {
                 document.getElementById('sidebar-container').innerHTML = data;
-                initSidebar(); // Note que o orders usa initSidebar(), ajustei aqui para consistência
+                initSidebar();
             })
             .catch(error => console.error('Erro ao carregar sidebar:', error));
     </script>
