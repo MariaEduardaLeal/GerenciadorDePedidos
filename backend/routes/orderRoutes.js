@@ -10,6 +10,7 @@ module.exports = (authenticateToken) => {
     router.put('/:id', authenticateToken, OrderController.updateOrder);
     router.delete('/:id', authenticateToken, OrderController.deleteOrder);
     router.put('/:id/complete', authenticateToken, OrderController.completeOrder);
+    router.put('/:id/start', authenticateToken, OrderController.startOrder); 
 
     return router;
 };
