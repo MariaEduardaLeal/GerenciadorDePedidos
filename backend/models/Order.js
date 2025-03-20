@@ -31,6 +31,11 @@ const Order = sequelize.define('Order', {
         type: DataTypes.STRING(255),
         allowNull: false,
     },
+    payment_type: { // Nova coluna
+        type: DataTypes.ENUM('pix', 'especie', 'cartao', 'ceu_rasa'),
+        allowNull: false,
+        defaultValue: 'pix',
+    },
 }, {
     tableName: 'orders',
     timestamps: true,

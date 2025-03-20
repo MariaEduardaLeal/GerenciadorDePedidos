@@ -33,7 +33,7 @@ class OrderController {
     }
 
     static async createOrder(req, res) {
-        const { order_name, customer_name, observation, items } = req.body;
+        const { order_name, customer_name, observation, items, payment_type } = req.body;
 
         if (!order_name || !customer_name || !items || !Array.isArray(items) || items.length === 0) {
             return res.status(400).json({ error: 'Mesa/Destino, nome do cliente e itens são obrigatórios' });
@@ -65,12 +65,17 @@ class OrderController {
                 observation,
                 order_name,
                 customer_name,
+                payment_type: payment_type || 'pix', // Novo campo
             });
 
             orderItems.forEach(item => (item.order_id = order.id));
             await OrderItem.bulkCreate(orderItems);
 
-            res.status(201).json({ message: 'Pedido criado com sucesso', order });
+            const createdOrder = await Order.findByPk(order.id, {
+                include: [{ model: OrderItem, include: [Product] }],
+            });
+
+            res.status(201).json({ message: 'Pedido criado com sucesso', order: createdOrder });
         } catch (error) {
             console.error('Erro ao criar pedido:', error);
             res.status(500).json({ error: 'Erro ao criar pedido' });
@@ -79,7 +84,7 @@ class OrderController {
 
     static async updateOrder(req, res) {
         const { id } = req.params;
-        const { order_name, customer_name, observation, items } = req.body;
+        const { order_name, customer_name, observation, items, payment_type } = req.body;
 
         if (!order_name || !customer_name || !items || !Array.isArray(items) || items.length === 0) {
             return res.status(400).json({ error: 'Mesa/Destino, nome do cliente e itens são obrigatórios' });
@@ -114,12 +119,17 @@ class OrderController {
                 customer_name,
                 observation,
                 total_price,
+                payment_type: payment_type || 'pix', // Novo campo
             });
 
             await OrderItem.destroy({ where: { order_id: order.id } });
             await OrderItem.bulkCreate(orderItems);
 
-            res.json({ message: 'Pedido atualizado com sucesso', order });
+            const updatedOrder = await Order.findByPk(order.id, {
+                include: [{ model: OrderItem, include: [Product] }],
+            });
+
+            res.json({ message: 'Pedido atualizado com sucesso', order: updatedOrder });
         } catch (error) {
             console.error('Erro ao atualizar pedido:', error);
             res.status(500).json({ error: 'Erro ao atualizar pedido' });
@@ -147,23 +157,20 @@ class OrderController {
 
     static async completeOrder(req, res) {
         const { id } = req.params;
-        const userId = req.user.id; // Assume que o middleware de autenticação adiciona req.user
-    
+        const userId = req.user.id;
+
         try {
             const order = await Order.findByPk(id, { include: OrderItem });
             if (!order) {
                 return res.status(404).json({ error: 'Pedido não encontrado' });
             }
-    
-            // Verificar se o pedido já está completo ou cancelado
+
             if (order.status === 'complete' || order.status === 'canceled') {
                 return res.status(400).json({ error: 'Este pedido já foi finalizado ou cancelado' });
             }
-    
-            // Atualizar o status do pedido
+
             await order.update({ status: 'complete' });
-    
-            // Registrar a ação no order_logs
+
             await OrderLog.create({
                 order_id: order.id,
                 user_id: userId,
@@ -173,8 +180,12 @@ class OrderController {
                 observation: order.observation || null,
                 order_name: order.order_name,
             });
-    
-            res.status(200).json({ message: 'Pedido finalizado com sucesso', order });
+
+            const completedOrder = await Order.findByPk(order.id, {
+                include: [{ model: OrderItem, include: [Product] }],
+            });
+
+            res.status(200).json({ message: 'Pedido finalizado com sucesso', order: completedOrder });
         } catch (error) {
             console.error('Erro ao finalizar pedido:', error);
             res.status(500).json({ error: 'Erro ao finalizar pedido' });

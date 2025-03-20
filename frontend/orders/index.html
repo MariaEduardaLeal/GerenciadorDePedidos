@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerenciar Pedidos - Pedido System</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-
 <body class="min-h-screen bg-gray-100 flex">
     <div id="sidebar-container" class="flex-shrink-0"></div>
     <div id="main-content" class="flex-1 transition-all duration-300 ease-in-out">
@@ -28,36 +26,35 @@
             </div>
 
             <!-- Modal -->
-            <div id="order-modal"
-                class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
+            <div id="order-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
                 <div class="bg-white p-6 rounded-lg shadow-lg w-1/2">
                     <h2 id="modal-title" class="text-xl font-bold mb-4">Criar Novo Pedido</h2>
                     <form id="order-form">
                         <div class="mb-4">
                             <label for="order-name" class="block text-sm font-medium text-gray-700">Mesa/Destino</label>
-                            <input type="text" id="order-name" name="order_name"
-                                class="mt-1 block w-full p-2 border border-gray-300 rounded" placeholder="Ex: Mesa 5"
-                                required>
+                            <input type="text" id="order-name" name="order_name" class="mt-1 block w-full p-2 border border-gray-300 rounded" placeholder="Ex: Mesa 5" required>
                         </div>
                         <div class="mb-4">
-                            <label for="customer-name" class="block text-sm font-medium text-gray-700">Nome do
-                                Cliente</label>
-                            <input type="text" id="customer-name" name="customer_name"
-                                class="mt-1 block w-full p-2 border border-gray-300 rounded" placeholder="Ex: João"
-                                required>
+                            <label for="customer-name" class="block text-sm font-medium text-gray-700">Nome do Cliente</label>
+                            <input type="text" id="customer-name" name="customer_name" class="mt-1 block w-full p-2 border border-gray-300 rounded" placeholder="Ex: João" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="payment-type" class="block text-sm font-medium text-gray-700">Tipo de Pagamento</label>
+                            <select id="payment-type" name="payment_type" class="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                <option value="pix">Pix</option>
+                                <option value="especie">Espécie</option>
+                                <option value="cartao">Cartão</option>
+                                <option value="ceu_rasa">Céu Rasa</option>
+                            </select>
                         </div>
                         <div class="mb-4">
                             <label for="observation" class="block text-sm font-medium text-gray-700">Observação</label>
-                            <textarea id="observation" name="observation"
-                                class="mt-1 block w-full p-2 border border-gray-300 rounded"
-                                placeholder="Observações do pedido"></textarea>
+                            <textarea id="observation" name="observation" class="mt-1 block w-full p-2 border border-gray-300 rounded" placeholder="Observações do pedido"></textarea>
                         </div>
                         <div id="order-items" class="mb-4"></div>
-                        <button type="button" id="add-item"
-                            class="bg-blue-500 text-white px-4 py-2 rounded mb-4">Adicionar Item</button>
+                        <button type="button" id="add-item" class="bg-blue-500 text-white px-4 py-2 rounded mb-4">Adicionar Item</button>
                         <div class="flex justify-end space-x-2">
-                            <button type="button" id="close-modal"
-                                class="bg-gray-500 text-white px-4 py-2 rounded">Cancelar</button>
+                            <button type="button" id="close-modal" class="bg-gray-500 text-white px-4 py-2 rounded">Cancelar</button>
                             <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Salvar</button>
                         </div>
                     </form>
@@ -77,5 +74,4 @@
             });
     </script>
 </body>
-
 </html>

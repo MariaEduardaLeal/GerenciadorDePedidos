@@ -49,15 +49,15 @@ async function loadProductsForSelect(container = orderItemsContainer) {
 
         const selects = container.querySelectorAll('.product-select');
         selects.forEach(select => {
-            const currentValue = select.value; // Preserva o valor selecionado
+            const currentValue = select.value;
             select.innerHTML = '<option value="">Selecione um produto</option>';
             products.forEach(product => {
                 const option = document.createElement('option');
                 option.value = product.id;
-                option.textContent = `${product.name} (R$ ${product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`;
+                option.textContent = `${product.name} (R$ ${product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`
                 select.appendChild(option);
             });
-            select.value = currentValue; // Restaura o valor selecionado
+            select.value = currentValue;
         });
     } catch (error) {
         console.error('Erro ao carregar produtos para select:', error);
@@ -93,6 +93,7 @@ async function loadOrders() {
                     <p class="text-sm text-gray-600">Criado por: ${user.name} (ID: ${order.user_id})</p>
                     <p class="text-sm text-gray-600">Total: R$ ${order.total_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                     <p class="text-sm text-gray-600">Status: ${order.status}</p>
+                    <p class="text-sm text-gray-600">Tipo de Pagamento: ${order.payment_type === 'pix' ? 'Pix' : order.payment_type === 'especie' ? 'Espécie' : order.payment_type === 'cartao' ? 'Cartão' : 'Céu Rasa'}</p>
                     <p class="text-sm text-gray-600">Observação: ${order.observation || 'Nenhuma'}</p>
                     <p class="text-sm text-gray-600">Itens: ${order.OrderItems.map(item => `${item.quantity}x ${item.Product.name}`).join(', ')}</p>
                     <p class="text-sm text-gray-600">Criado em: ${new Date(order.created_at).toLocaleString('pt-BR')}</p>
@@ -118,12 +119,11 @@ async function openModal(order = null) {
     orderItemsContainer.innerHTML = '';
 
     if (order) {
-        // Preencher os campos com os dados do pedido
         document.getElementById('order-name').value = order.order_name;
         document.getElementById('customer-name').value = order.customer_name;
         document.getElementById('observation').value = order.observation || '';
+        document.getElementById('payment-type').value = order.payment_type;
 
-        // Preencher os itens do pedido
         order.OrderItems.forEach(item => {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'flex items-center space-x-2';
@@ -136,12 +136,11 @@ async function openModal(order = null) {
             `;
             orderItemsContainer.appendChild(itemDiv);
         });
-        await loadProductsForSelect(orderItemsContainer); // Carrega os produtos após adicionar todos os itens
-        // Definir os valores dos selects após carregar os produtos
+        await loadProductsForSelect(orderItemsContainer);
         orderItemsContainer.querySelectorAll('.flex').forEach((itemDiv, index) => {
             itemDiv.querySelector('.product-select').value = order.OrderItems[index].product_id;
         });
-        orderForm.dataset.orderId = order.id; // Armazena o ID para edição
+        orderForm.dataset.orderId = order.id;
     } else {
         const initialItem = document.createElement('div');
         initialItem.className = 'flex items-center space-x-2';
@@ -162,7 +161,7 @@ function closeModal() {
     modal.classList.add('hidden');
     orderItemsContainer.innerHTML = '';
     orderForm.reset();
-    delete orderForm.dataset.orderId; // Limpa o ID ao fechar
+    delete orderForm.dataset.orderId;
 }
 
 // Adicionar novo item ao pedido
@@ -197,6 +196,7 @@ orderForm.addEventListener('submit', async (e) => {
     const order_name = document.getElementById('order-name').value;
     const customer_name = document.getElementById('customer-name').value;
     const observation = document.getElementById('observation').value;
+    const payment_type = document.getElementById('payment-type').value;
     const items = Array.from(orderItemsContainer.querySelectorAll('.flex'))
         .map(item => ({
             product_id: parseInt(item.querySelector('.product-select').value) || 0,
@@ -213,7 +213,7 @@ orderForm.addEventListener('submit', async (e) => {
         return;
     }
 
-    const orderId = orderForm.dataset.orderId; // Para edição
+    const orderId = orderForm.dataset.orderId;
     const method = orderId ? 'PUT' : 'POST';
     const url = orderId ? `/api/orders/${orderId}` : '/api/orders';
 
@@ -224,7 +224,7 @@ orderForm.addEventListener('submit', async (e) => {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ order_name, customer_name, observation, items }),
+            body: JSON.stringify({ order_name, customer_name, observation, items, payment_type }),
         });
 
         const data = await response.json();
@@ -257,7 +257,6 @@ ordersList.addEventListener('click', async (e) => {
                 throw new Error(data.error || 'Erro ao carregar pedido');
             }
             const order = await response.json();
-            console.log("Order: ", order);
             await openModal(order);
         } catch (error) {
             console.error('Erro ao carregar pedido para edição:', error);
