@@ -28,7 +28,7 @@ logoutBtn.addEventListener('click', () => {
     window.location.href = '/index.html';
 });
 
-// Carregar pedidos em progresso
+// Carregar pedidos pendentes e em progresso
 async function loadKitchenOrders() {
     try {
         const response = await fetch('/api/orders', {
@@ -40,15 +40,15 @@ async function loadKitchenOrders() {
         }
 
         const orders = await response.json();
-        const inProgressOrders = orders.filter(order => order.status === 'in_progress');
+        const activeOrders = orders.filter(order => order.status === 'pending' || order.status === 'in_progress');
         kitchenOrders.innerHTML = '';
 
-        if (inProgressOrders.length === 0) {
-            kitchenOrders.innerHTML = '<p class="text-gray-500">Nenhum pedido em progresso.</p>';
+        if (activeOrders.length === 0) {
+            kitchenOrders.innerHTML = '<p class="text-gray-500">Nenhum pedido pendente ou em progresso.</p>';
             return;
         }
 
-        inProgressOrders.forEach(order => {
+        activeOrders.forEach(order => {
             const orderDiv = document.createElement('div');
             orderDiv.className = 'bg-white p-4 rounded-lg shadow-md flex justify-between items-center draggable';
             orderDiv.draggable = true;
@@ -63,7 +63,7 @@ async function loadKitchenOrders() {
                 </div>
                 <div class="flex space-x-4 items-center">
                     <label class="flex items-center text-yellow-500">
-                        <input type="checkbox" class="in-progress-checkbox mr-2 h-5 w-5 text-yellow-500 border-gray-300 rounded focus:ring-yellow-500" data-id="${order.id}" checked>
+                        <input type="checkbox" class="in-progress-checkbox mr-2 h-5 w-5 text-yellow-500 border-gray-300 rounded focus:ring-yellow-500" data-id="${order.id}" ${order.status === 'in_progress' ? 'checked' : ''}>
                         <span>Em Progresso</span>
                     </label>
                     <label class="flex items-center text-green-500">
@@ -125,12 +125,15 @@ function setupCheckboxes() {
     const completeCheckboxes = document.querySelectorAll('.complete-checkbox');
 
     inProgressCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
+        checkbox.addEventListener('change', async (e) => {
             const orderId = e.target.dataset.id;
             const completeCheckbox = kitchenOrders.querySelector(`.complete-checkbox[data-id="${orderId}"]`);
-            if (!e.target.checked && !completeCheckbox.checked) {
-                e.target.checked = true; // Não permite desmarcar ambos
-                alert('O pedido deve estar "Em Progresso" ou "Finalizado".');
+            if (e.target.checked) {
+                if (confirm('Deseja marcar este pedido como em progresso?')) {
+                    await startOrder(orderId);
+                } else {
+                    e.target.checked = false;
+                }
             }
         });
     });
@@ -145,11 +148,35 @@ function setupCheckboxes() {
                     await completeOrder(orderId);
                 } else {
                     e.target.checked = false;
-                    inProgressCheckbox.checked = true;
                 }
             }
         });
     });
+}
+
+// Iniciar pedido
+async function startOrder(orderId) {
+    try {
+        const response = await fetch(`/api/orders/${orderId}/start`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Erro ao iniciar pedido');
+        }
+
+        alert('Pedido iniciado com sucesso');
+        loadKitchenOrders();
+    } catch (error) {
+        console.error('Erro ao iniciar pedido:', error);
+        alert('Erro ao iniciar pedido');
+        loadKitchenOrders(); // Recarrega pra corrigir o estado
+    }
 }
 
 // Finalizar pedido
@@ -161,7 +188,6 @@ async function completeOrder(orderId) {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ status: 'completed' }),
         });
 
         if (!response.ok) {

@@ -16,8 +16,8 @@ const Order = sequelize.define('Order', {
         allowNull: false,
     },
     status: {
-        type: DataTypes.ENUM('in_progress', 'complete', 'canceled'),
-        defaultValue: 'in_progress',
+        type: DataTypes.ENUM('pending', 'in_progress', 'complete', 'canceled'), 
+        defaultValue: 'pending',
     },
     observation: {
         type: DataTypes.TEXT,
@@ -31,7 +31,7 @@ const Order = sequelize.define('Order', {
         type: DataTypes.STRING(255),
         allowNull: false,
     },
-    payment_type: { // Nova coluna
+    payment_type: {
         type: DataTypes.ENUM('pix', 'especie', 'cartao', 'ceu_rasa'),
         allowNull: false,
         defaultValue: 'pix',

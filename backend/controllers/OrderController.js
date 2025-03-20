@@ -61,11 +61,10 @@ class OrderController {
             const order = await Order.create({
                 user_id: req.user.id,
                 total_price,
-                status: 'in_progress',
                 observation,
                 order_name,
                 customer_name,
-                payment_type: payment_type || 'pix', // Novo campo
+                payment_type: payment_type || 'pix',
             });
 
             orderItems.forEach(item => (item.order_id = order.id));
@@ -119,7 +118,7 @@ class OrderController {
                 customer_name,
                 observation,
                 total_price,
-                payment_type: payment_type || 'pix', // Novo campo
+                payment_type: payment_type || 'pix',
             });
 
             await OrderItem.destroy({ where: { order_id: order.id } });
@@ -189,6 +188,43 @@ class OrderController {
         } catch (error) {
             console.error('Erro ao finalizar pedido:', error);
             res.status(500).json({ error: 'Erro ao finalizar pedido' });
+        }
+    }
+
+    static async startOrder(req, res) { // Novo método pra marcar como 'in_progress'
+        const { id } = req.params;
+        const userId = req.user.id;
+
+        try {
+            const order = await Order.findByPk(id, { include: OrderItem });
+            if (!order) {
+                return res.status(404).json({ error: 'Pedido não encontrado' });
+            }
+
+            if (order.status !== 'pending') {
+                return res.status(400).json({ error: 'Este pedido já está em progresso, concluído ou cancelado' });
+            }
+
+            await order.update({ status: 'in_progress' });
+
+            await OrderLog.create({
+                order_id: order.id,
+                user_id: userId,
+                total_price: order.total_price,
+                status: 'in_progress',
+                action: 'Pedido iniciado',
+                observation: order.observation || null,
+                order_name: order.order_name,
+            });
+
+            const startedOrder = await Order.findByPk(order.id, {
+                include: [{ model: OrderItem, include: [Product] }],
+            });
+
+            res.status(200).json({ message: 'Pedido iniciado com sucesso', order: startedOrder });
+        } catch (error) {
+            console.error('Erro ao iniciar pedido:', error);
+            res.status(500).json({ error: 'Erro ao iniciar pedido' });
         }
     }
 }
